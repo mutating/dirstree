@@ -1,1 +1,1 @@
-from dirstree.walker import DirectoryWalker
+from dirstree.walker import DirectoryWalker as DirectoryWalker  # noqa: F401
