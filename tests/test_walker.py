@@ -5,7 +5,6 @@ from typing import Union
 from dirstree import DirectoryWalker
 
 
-
 def test_walk_test_directory_with_default_python_extensions(walk_directory_path: Union[str, Path]):
     walker = DirectoryWalker(walk_directory_path)
 
