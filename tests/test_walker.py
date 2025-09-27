@@ -9,6 +9,7 @@ from dirstree import DirectoryWalker
 def test_walk_test_directory_with_default_python_extensions(walk_directory_path: Union[str, Path]):
     walker = DirectoryWalker(walk_directory_path)
 
+    print([str(x) for x in DirectoryWalker(walk_directory_path).walk()])
     assert [str(x) for x in walker.walk()] == [
         os.path.join('tests', 'test_files', 'walk_it', '__init__.py'),
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
