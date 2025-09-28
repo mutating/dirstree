@@ -8,6 +8,7 @@ import pathspec
 # TODO: add docstring
 # TODO: add a .__repr__() method
 # TODO: add possibility to iterate throw an object without using the .walk() method
+# TODO: add a special class to crawl only throw python files
 class DirectoryWalker:
     def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude_patterns: Optional[List[str]] = None) -> None:
         self.path = path
