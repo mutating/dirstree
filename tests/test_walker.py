@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Union
 
+import pytest
 from dirstree import Crawler
 
 
@@ -79,3 +80,13 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(crawl_directo
     assert [str(x) for x in crawler.go()] == [
         os.path.join('tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt'),
     ]
+
+
+@pytest.mark.parametrize(['crawler', 'expected_repr'], [
+    (Crawler('.'), 'Crawler(\'.\')'),
+    (Crawler('usr/bin'), 'Crawler(\'usr/bin\')'),
+    (Crawler('.', extensions=['.py']), 'Crawler(\'.\', extensions=[\'.py\'])'),
+    (Crawler('.', exclude=['*.py'], extensions=['.py']), 'Crawler(\'.\', extensions=[\'.py\'], exclude=[\'*.py\'])'),
+])
+def test_repr(crawler, expected_repr):
+    assert repr(crawler) == expected_repr
