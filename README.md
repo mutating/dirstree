@@ -36,3 +36,35 @@ You can also quickly try out this and other packages without having to install u
 
 
 ## Basic usage
+
+It's very easy to work with the library in your own code:
+
+- Create a crawler object, passing the path to the base directory and, if necessary, additional arguments.
+- Iterate recursively through the files in this directory using the `.walk()` method.
+
+The simplest code example would look like this:
+
+```python
+from dirstree import DirectoryWalker
+
+walker = DirectoryWalker('.')
+
+for file in walker.walk():
+    print(file)
+```
+
+Here we output recursively (that is, including the contents of nested directories) all files from the current directory. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
+
+However, we can iterate not over all files in the directory, but only over files with the extension we need, if we pass the collection with the desired extensions when creating the crawler object:
+
+```python
+walker = DirectoryWalker('.', extensions=['.txt'])  # Iterate only on .txt files.
+```
+
+We can also pass a list of exceptions, specifying files or subdirectories for which we will NOT iterate:
+
+```python
+walker = DirectoryWalker('.', exclude_patterns=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
+```
+
+Please note that you can specify any files and folders in the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring).

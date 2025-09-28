@@ -4,11 +4,12 @@ from pathlib import Path
 import pathspec
 
 
+# TODO: rename this class to "Crawler"
 class DirectoryWalker:
     def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude_patterns: Optional[List[str]] = None) -> None:
         self.path = path
         self.extensions = extensions
-        self.exclude_patterns = exclude_patterns if exclude_patterns is not None else []
+        self.exclude_patterns = exclude_patterns if exclude_patterns is not None else []  # TODO: rename it to just "exclude"
 
     def walk(self) -> Generator[Path, None, None]:
         base_path = Path(self.path)
