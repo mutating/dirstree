@@ -1,1 +1,1 @@
-from dirstree.walker import Crawler as Crawler  # noqa: F401
+from dirstree.crawler import Crawler as Crawler  # noqa: F401
