@@ -87,6 +87,7 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(crawl_directo
     (Crawler('usr/bin'), 'Crawler(\'usr/bin\')'),
     (Crawler('.', extensions=['.py']), 'Crawler(\'.\', extensions=[\'.py\'])'),
     (Crawler('.', exclude=['*.py'], extensions=['.py']), 'Crawler(\'.\', extensions=[\'.py\'], exclude=[\'*.py\'])'),
+    (Crawler('.', exclude=['*.py']), 'Crawler(\'.\', exclude=[\'*.py\'])'),
 ])
 def test_repr(crawler, expected_repr):
     assert repr(crawler) == expected_repr
