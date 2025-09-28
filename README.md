@@ -49,9 +49,9 @@ The simplest code example would look like this:
 ```python
 from dirstree import Crawler
 
-walker = Crawler('.')
+crawler = Crawler('.')
 
-for file in walker.go():
+for file in crawler.go():
     print(file)
 ```
 
@@ -70,13 +70,13 @@ To select a specific method, you need to pass a specific parameter when creating
 To set the file extensions you are interested in, use the `extensions` parameter:
 
 ```python
-walker = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
+crawler = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
 
 To specify which files and directories you do NOT want to iterate over, use the `exclude` parameter:
 
 ```python
-walker = Crawler('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
+crawler = Crawler('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
 ```
 
 > ↑ Please note that we use the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring) here.
