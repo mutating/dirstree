@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools==68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dirstree"
+version = "0.0.1"
+authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
+description = 'Another library for iterating through the contents of a directory'
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ['pathspec==0.12.1']
+
+classifiers = [
+    "Operating System :: OS Independent",
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: POSIX :: Linux',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'License :: OSI Approved :: MIT License',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Libraries',
+]
+keywords = ['files iteration']
+
+[tool.setuptools.package-data]
+"dirstree" = ["py.typed"]
+
+[tool.mutmut]
+paths_to_mutate = "dirstree"
+runner = "pytest"
+
+[tool.pytest.ini_options]
+markers = ["mypy_testing"]
+
+[project.urls]
+'Source' = 'https://github.com/pomponchik/dirstree'
+'Tracker' = 'https://github.com/pomponchik/dirstree/issues'
