@@ -2,6 +2,7 @@ from typing import List, Optional, Union, Collection, Generator
 from pathlib import Path
 
 import pathspec
+from printo import descript_data_object
 
 
 # TODO: add docstring
@@ -14,6 +15,15 @@ class Crawler:
         self.path = path
         self.extensions = extensions
         self.exclude = exclude if exclude is not None else []
+
+    def __repr__(self) -> str:
+        addictions = {}
+        if self.extensions is not None:
+            addictions['extensions'] = self.extensions
+        if self.exclude:
+            addictions['exclude'] = self.exclude
+
+        return descript_data_object(self.__class__.__name__, (self.path,), addictions)
 
     def go(self) -> Generator[Path, None, None]:
         base_path = Path(self.path)
