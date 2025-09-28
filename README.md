@@ -55,7 +55,7 @@ for file in walker.walk():
 
 Here we output recursively (that is, including the contents of nested directories) all files from the current directory. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
 
-However, we can iterate not over all files in the directory, but only over files with the extension we need, if we pass the collection with the desired extensions when creating the crawler object:
+However, we can iterate not over all files in the directory, but only over files with the [extension](https://en.wikipedia.org/wiki/Filename_extension) we need, if we pass the collection with the desired extensions when creating the crawler object:
 
 ```python
 walker = DirectoryWalker('.', extensions=['.txt'])  # Iterate only on .txt files.
