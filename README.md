@@ -47,9 +47,9 @@ It's very easy to work with the library in your own code:
 The simplest code example would look like this:
 
 ```python
-from dirstree import DirectoryWalker
+from dirstree import Crawler
 
-walker = DirectoryWalker('.')
+walker = Crawler('.')
 
 for file in walker.walk():
     print(file)
@@ -70,13 +70,13 @@ To select a specific method, you need to pass a specific parameter when creating
 To set the file extensions you are interested in, use the `extensions` parameter:
 
 ```python
-walker = DirectoryWalker('.', extensions=['.txt'])  # Iterate only on .txt files.
+walker = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
 
 To specify which files and directories you do NOT want to iterate over, use the `exclude` parameter:
 
 ```python
-walker = DirectoryWalker('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
+walker = Crawler('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
 ```
 
 > ↑ Please note that we use the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring) here.

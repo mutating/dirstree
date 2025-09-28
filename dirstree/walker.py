@@ -4,13 +4,12 @@ from pathlib import Path
 import pathspec
 
 
-# TODO: rename this class to "Crawler"
 # TODO: add docstring
 # TODO: add a .__repr__() method
 # TODO: add possibility to iterate throw an object without using the .walk() method
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
-class DirectoryWalker:
+class Crawler:
     def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude: Optional[List[str]] = None) -> None:
         self.path = path
         self.extensions = extensions
