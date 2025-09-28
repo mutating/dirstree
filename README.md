@@ -78,4 +78,4 @@ To specify which files and directories you do NOT want to iterate over, use the 
 walker = DirectoryWalker('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
 ```
 
-> ↑ Please note that you can specify any files and directories in the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring).
+> ↑ Please note that we use the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring) here.
