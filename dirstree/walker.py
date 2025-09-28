@@ -11,14 +11,14 @@ import pathspec
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
 class DirectoryWalker:
-    def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude_patterns: Optional[List[str]] = None) -> None:
+    def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude: Optional[List[str]] = None) -> None:
         self.path = path
         self.extensions = extensions
-        self.exclude_patterns = exclude_patterns if exclude_patterns is not None else []  # TODO: rename it to just "exclude"
+        self.exclude = exclude if exclude is not None else []
 
     def walk(self) -> Generator[Path, None, None]:
         base_path = Path(self.path)
-        excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude_patterns)
+        excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
 
         for child_path in base_path.rglob('*'):
             if child_path.is_file() and not excludes_spec.match_file(child_path):
