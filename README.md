@@ -42,7 +42,7 @@ You can also quickly try out this and other packages without having to install u
 It's very easy to work with the library in your own code:
 
 - Create a crawler object, passing the path to the base directory and, if necessary, additional arguments.
-- Iterate recursively through the files in this directory using the `.walk()` method.
+- Iterate recursively through the files in this directory using the `.go()` method.
 
 The simplest code example would look like this:
 
@@ -51,7 +51,7 @@ from dirstree import Crawler
 
 walker = Crawler('.')
 
-for file in walker.walk():
+for file in walker.go():
     print(file)
 ```
 

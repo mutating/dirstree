@@ -15,8 +15,7 @@ class Crawler:
         self.extensions = extensions
         self.exclude = exclude if exclude is not None else []
 
-    # TODO: rename this method to .go()
-    def walk(self) -> Generator[Path, None, None]:
+    def go(self) -> Generator[Path, None, None]:
         base_path = Path(self.path)
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
 
