@@ -54,7 +54,7 @@ for file in walker.walk():
     print(file)
 ```
 
-↑ Here we output recursively (that is, including the contents of nested directories) all files from the current directory. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
+> ↑ Here we output recursively (that is, including the contents of nested directories) all files from the current directory. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
 
 
 ## Filtering
