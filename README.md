@@ -72,10 +72,10 @@ To set the file extensions you are interested in, use the `extensions` parameter
 walker = DirectoryWalker('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
 
-To specify which files and folders you do NOT want to iterate over, use the `exclude` parameter:
+To specify which files and directories you do NOT want to iterate over, use the `exclude` parameter:
 
 ```python
 walker = DirectoryWalker('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" directories.
 ```
 
-> ↑ Please note that you can specify any files and folders in the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring).
+> ↑ Please note that you can specify any files and directories in the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring).
