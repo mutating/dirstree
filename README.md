@@ -26,7 +26,7 @@ There are many libraries for traversing directories. You can also do this using 
 
 ## Installation
 
-You can install `dirstree` using pip:
+You can install [`dirstree`](https://pypi.python.org/pypi/dirstree) using pip:
 
 ```bash
 pip install dirstree
