@@ -5,6 +5,9 @@ import pathspec
 
 
 # TODO: rename this class to "Crawler"
+# TODO: add docstring
+# TODO: add a .__repr__() method
+# TODO: add possibility to iterate throw an object without using the .walk() method
 class DirectoryWalker:
     def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude_patterns: Optional[List[str]] = None) -> None:
         self.path = path
