@@ -6,7 +6,6 @@ from printo import descript_data_object
 
 
 # TODO: add docstring
-# TODO: add a .__repr__() method
 # TODO: add possibility to iterate throw an object without using the .walk() method
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
