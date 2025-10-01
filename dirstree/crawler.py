@@ -25,6 +25,9 @@ class Crawler:
 
         return descript_data_object(self.__class__.__name__, (self.path,), addictions)
 
+    def __iter__(self) -> Generator[Path, None, None]:
+        yield from self.go()
+
     def go(self) -> Generator[Path, None, None]:
         base_path = Path(self.path)
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
