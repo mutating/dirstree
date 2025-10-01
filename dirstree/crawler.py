@@ -8,6 +8,8 @@ from printo import descript_data_object
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
 # TODO: add an exception if an extension is not starting from a dot
+# TODO: add cancellation tokens
+# TODO: add filtering by callable
 class Crawler:
     """
     The crawler is used to sort through all the files in some directory. If necessary, you can specify filters, that is, certain conditions under which some files will be ignored.
