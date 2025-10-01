@@ -5,7 +5,6 @@ import pathspec
 from printo import descript_data_object
 
 
-# TODO: add possibility to iterate throw an object without using the .go() method
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
 # TODO: add an exception if an extension is not starting from a dot
