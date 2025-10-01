@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, Collection, Generator
+from typing import List, Optional, Union, Collection, Generator, Callable
 from pathlib import Path
 
 import pathspec
@@ -24,10 +24,11 @@ class Crawler:
 
     Only the first argument with the directory path is required, the rest are optional.
     """
-    def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude: Optional[List[str]] = None) -> None:
+    def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude: Optional[List[str]] = None, filter: Callable[[Path], bool] = lambda x: True) -> None:
         self.path = path
         self.extensions = extensions
         self.exclude = exclude if exclude is not None else []
+        self.filter = filter
 
     def __repr__(self) -> str:
         addictions = {}
@@ -46,6 +47,6 @@ class Crawler:
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
 
         for child_path in base_path.rglob('*'):
-            if child_path.is_file() and not excludes_spec.match_file(child_path):
+            if child_path.is_file() and not excludes_spec.match_file(child_path) and self.filter(child_path):
                 if self.extensions is None or child_path.suffix in self.extensions:
                     yield child_path
