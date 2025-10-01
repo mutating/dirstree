@@ -91,3 +91,9 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(crawl_directo
 ])
 def test_repr(crawler, expected_repr):
     assert repr(crawler) == expected_repr
+
+
+def test_iter():
+    crawler = Crawler('.')
+
+    assert list(crawler) == list(crawler.go())
