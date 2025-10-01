@@ -5,11 +5,11 @@ import pathspec
 from printo import descript_data_object
 
 
-# TODO: add docstring
 # TODO: add possibility to iterate throw an object without using the .go() method
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
 # TODO: add an exception if an extension is not starting from a dot
+# # TODO: add docstring
 class Crawler:
     def __init__(self, path: Union[str, Path], extensions: Optional[Collection[str]] = None, exclude: Optional[List[str]] = None) -> None:
         self.path = path
