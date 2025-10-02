@@ -19,6 +19,7 @@ class Crawler:
     >>> from dirstree.crawler import Crawler
     >>>
     >>> crawler = Crawler('path/to/directory', extensions=['.py', '.txt'], exclude=['*.tmp'])
+    >>>
     >>> for file in crawler:
     >>>     print(file)
 
