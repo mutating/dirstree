@@ -106,9 +106,9 @@ for path in Crawler('.', token=TimeoutToken(0.0001)): # Limit the iteration time
 2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it everytime:
 
   ```python
-crawler = Crawler('.') # Limit the iteration time to 0.0001 seconds.
+crawler = Crawler('.')
 
-for path in crawler.go(token=TimeoutToken(0.0001)):
+for path in crawler.go(token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
     print(path)
 ```
 
