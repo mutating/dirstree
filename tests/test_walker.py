@@ -121,3 +121,15 @@ def test_filter_first():
         return result
 
     assert list(Crawler('.'))[1:] == list(Crawler('.', filter=filter))
+
+
+def test_argument_of_filter_is_path_object(crawl_directory_path):
+    collector = []
+
+    def filter(path):
+        collector.append(path)
+        return True
+
+    crawler = Crawler(crawl_directory_path, filter=filter)
+
+    assert list(crawler) == collector
