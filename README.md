@@ -60,10 +60,12 @@ for file in crawler:
 
 ## Filtering
 
-Iterating through the files in the directory, you may not want to view all files, but only files of a certain type. To do this, ignore all other files. How to do it? There are 2 ways:
+Iterating through the files in the directory, you may not want to view all files, but only files of a certain type. To do this, ignore all other files. How to do it? There are 3 ways:
 
 - Bypass only files with the specified [extensions](https://en.wikipedia.org/wiki/Filename_extension), such as `.txt`, `.doc`, or `.py`.
 - Bypass files whose paths follow a specific text pattern.
+- Use an arbitrary function to determine whether you need each specific path or not.
+
 
 To select a specific method, you need to pass a specific parameter when creating the crawler object. Of course, all the methods can be combined with each other.
 
@@ -80,3 +82,9 @@ crawler = Crawler('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" di
 ```
 
 > ↑ Please note that we use the [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring) here.
+
+If you need a universal way to filter out unnecessary paths, pass your function as the `filter` parameter:
+
+```python
+crawler = Crawler('.', filter = lambda path: len(str(path)) == 7)  # Iterate only on paths that are 7 characters long.
+```
