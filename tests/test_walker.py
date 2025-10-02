@@ -97,3 +97,27 @@ def test_iter():
     crawler = Crawler('.')
 
     assert list(crawler) == list(crawler.go())
+
+
+def test_crawl_repeat():
+    crawler = Crawler('.')
+
+    assert list(crawler) == list(crawler)
+
+
+def test_filter_first():
+    index = 0
+
+    def filter(path) -> bool:
+        nonlocal index
+
+        if index == 0:
+            result = False
+        else:
+            result = True
+
+        index += 1
+
+        return result
+
+    assert list(Crawler('.'))[1:] == list(Crawler('.', filter=filter))
