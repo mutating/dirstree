@@ -24,7 +24,7 @@ There are many libraries for traversing directories. You can also do this using 
 - [**Installation**](#installation)
 - [**Basic usage**](#basic-usage)
 - [**Filtering**](#filtering)
-
+- [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
 
 ## Installation
 
@@ -88,3 +88,28 @@ If you need a universal way to filter out unnecessary paths, pass your function 
 ```python
 crawler = Crawler('.', filter = lambda path: len(str(path)) == 7)  # Iterate only on paths that are 7 characters long.
 ```
+
+
+## Working with Cancellation Tokens
+
+You can set an arbitrary condition under which file traversal will stop using [cancellation tokens](https://cantok.readthedocs.io/en/latest/the_pattern/) from the [`cantok`](https://github.com/pomponchik/cantok) library.
+
+> There are 2 ways to do this ↓
+
+1. If you use the crawler as a one-time object for a single iteration, set the token when creating it:
+
+  ```python
+for path in Crawler('.', token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
+    print(path)
+```
+
+2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it everytime:
+
+  ```python
+crawler = Crawler('.') # Limit the iteration time to 0.0001 seconds.
+
+for path in crawler.go(token=TimeoutToken(0.0001)):
+    print(path)
+```
+
+> ↑ Follow these rules to avoid accidentally "baking" an expired token inside a crawler object.
