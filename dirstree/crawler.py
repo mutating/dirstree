@@ -15,7 +15,7 @@ class Crawler:
 
     A simple example of the code:
 
-    >>> from dirstree.crawler import Crawler
+    >>> from dirstree import Crawler
     >>>
     >>> crawler = Crawler('path/to/directory', extensions=['.py', '.txt'], exclude=['*.tmp'])
     >>>
