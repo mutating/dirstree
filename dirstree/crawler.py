@@ -8,7 +8,6 @@ from cantok import AbstractToken, DefaultToken
 
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
-# TODO: add an exception if an extension is not starting from a dot
 class Crawler:
     """
     The crawler is used to sort through all the files in some directory. If necessary, you can specify filters, that is, certain conditions under which some files will be ignored.
