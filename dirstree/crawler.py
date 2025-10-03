@@ -33,18 +33,18 @@ class Crawler:
         filter: Callable[[Path], bool] = lambda x: True,
         token: AbstractToken = DefaultToken(),
     ) -> None:
-        self.path = path
-        self.extensions = extensions
-        self.exclude = exclude if exclude is not None else []
-        self.filter = filter
-        self.token = token
-
         if extensions is not None:
             for extension in extensions:
                 if not extension.startswith('.'):
                     raise ValueError(
                         f'The line with the file extension must start with a dot. You have transmitted: "{extension}".'
                     )
+
+        self.path = path
+        self.extensions = extensions
+        self.exclude = exclude if exclude is not None else []
+        self.filter = filter
+        self.token = token
 
     def __repr__(self) -> str:
         addictions = {}
