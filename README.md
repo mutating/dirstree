@@ -14,7 +14,7 @@
 
 There are many libraries for traversing directories. You can also do this using the standard library. This particular library is very different in that:
 
-- ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom collables.
+- ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom callables.
 - 🐍 Natively works with both [`Path` objects](https://docs.python.org/3/library/pathlib.html#basic-use) from the standard library and strings.
 - ❌ Support for [cancellation tokens](https://github.com/pomponchik/cantok).
 
