@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
+import full_match
 from cantok import ConditionToken, SimpleToken, DefaultToken
 
 from dirstree import Crawler
@@ -210,3 +211,13 @@ def test_default_token(crawl_directory_path: Union[str, Path]):
     assert list(Crawler(crawl_directory_path, token=DefaultToken())) == list(
         Crawler(crawl_directory_path)
     )
+
+
+def test_pass_not_starting_with_dot_extension(crawl_directory_path: Union[str, Path]):
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            'The line with the file extension must start with a dot. You have passed: "txt".'
+        ),
+    ):
+        Crawler(crawl_directory_path, extensions=['txt'])
