@@ -37,7 +37,7 @@ class Crawler:
             for extension in extensions:
                 if not extension.startswith('.'):
                     raise ValueError(
-                        f'The line with the file extension must start with a dot. You have transmitted: "{extension}".'
+                        f'The line with the file extension must start with a dot. You have passed: "{extension}".'
                     )
 
         self.path = path
