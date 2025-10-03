@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
-from cantok import ConditionToken
+from cantok import ConditionToken, SimpleToken, DefaultToken
 
 from dirstree import Crawler
 
@@ -199,3 +199,13 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
     crawler = Crawler(crawl_directory_path, token=token)
 
     assert list(Crawler(crawl_directory_path))[:n] == list(crawler)
+
+
+def test_cancelled_token(crawl_directory_path: Union[str, Path]):
+    assert list(Crawler(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
+
+
+def test_default_token(crawl_directory_path: Union[str, Path]):
+    assert list(Crawler(crawl_directory_path, token=DefaultToken())) == list(
+        Crawler(crawl_directory_path)
+    )
