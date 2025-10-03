@@ -174,6 +174,7 @@ def test_argument_of_filter_is_path_object(crawl_directory_path):
 @pytest.mark.parametrize(
     ['n'],
     [
+        (0,),
         (1,),
         (2,),
     ],
