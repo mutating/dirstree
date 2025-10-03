@@ -39,6 +39,13 @@ class Crawler:
         self.filter = filter
         self.token = token
 
+        if extensions is not None:
+            for extension in extensions:
+                if not extension.startswith('.'):
+                    raise ValueError(
+                        f'The line with the file extension must start with a dot. You have transmitted: "{extension}".'
+                    )
+
     def __repr__(self) -> str:
         addictions = {}
         if self.extensions is not None:
