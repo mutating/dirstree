@@ -5,10 +5,12 @@ import pathspec
 from printo import descript_data_object, not_none
 from cantok import AbstractToken, DefaultToken
 
+from dirstree.crawlers.abstract import AbstractCrawler
+
 
 # TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
-class Crawler:
+class Crawler(AbstractCrawler):
     """
     The crawler is used to sort through all the files in some directory. If necessary, you can specify filters, that is, certain conditions under which some files will be ignored.
 
@@ -67,9 +69,6 @@ class Crawler:
             },
             filters=filters,
         )
-
-    def __iter__(self) -> Generator[Path, None, None]:
-        yield from self.go()
 
     def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
         token = token + self.token

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from cantok import AbstractToken, DefaultToken
 
-from dirstree.crawler import Crawler
+from dirstree.crawlers.crawler import Crawler
 
 
 class PythonCrawler(Crawler):
