@@ -79,10 +79,10 @@ class Crawler(AbstractCrawler):
                 if (
                     child_path.is_file()
                     and not excludes_spec.match_file(child_path)
+                    and (self.extensions is None or child_path.suffix in self.extensions)
                     and (self.filter is None or self.filter(child_path))
                 ):
-                    if self.extensions is None or child_path.suffix in self.extensions:
-                        yield child_path
+                    yield child_path
 
                 if not token:
                     break
