@@ -11,9 +11,12 @@ class PythonCrawler(Crawler):
         self,
         path: Union[str, Path],
         exclude: Optional[List[str]] = None,
-        filter: Callable[[Path], bool] = lambda x: True,
+        filter: Callable[[Path], bool] = None,
         token: AbstractToken = DefaultToken(),
     ) -> None:
         super().__init__(
             path, extensions=('.py',), exclude=exclude, filter=filter, token=token
         )
+        self.addictional_repr_filters = {
+            'extensions': lambda x: False,
+        }

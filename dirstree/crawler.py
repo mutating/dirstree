@@ -2,7 +2,7 @@ from typing import List, Optional, Union, Collection, Generator, Callable
 from pathlib import Path
 
 import pathspec
-from printo import descript_data_object
+from printo import descript_data_object, not_none
 from cantok import AbstractToken, DefaultToken
 
 
@@ -29,7 +29,7 @@ class Crawler:
         path: Union[str, Path],
         extensions: Optional[Collection[str]] = None,
         exclude: Optional[List[str]] = None,
-        filter: Callable[[Path], bool] = lambda x: True,
+        filter: Optional[Callable[[Path], bool]] = None,
         token: AbstractToken = DefaultToken(),
     ) -> None:
         if extensions is not None:
@@ -45,14 +45,28 @@ class Crawler:
         self.filter = filter
         self.token = token
 
-    def __repr__(self) -> str:
-        addictions = {}
-        if self.extensions is not None:
-            addictions['extensions'] = self.extensions
-        if self.exclude:
-            addictions['exclude'] = self.exclude
+        self.addictional_repr_filters = {}
 
-        return descript_data_object(self.__class__.__name__, (self.path,), addictions)
+    def __repr__(self) -> str:
+        filters={
+            'extensions': not_none,
+            'exclude': lambda x: bool(x),
+            'filter': not_none,
+            'token': lambda x: not isinstance(x, DefaultToken),
+        }
+        filters.update(self.addictional_repr_filters)
+
+        return descript_data_object(
+            self.__class__.__name__,
+            [self.path],
+            {
+                'extensions': self.extensions,
+                'exclude': self.exclude,
+                'filter': self.filter,
+                'token': self.token,
+            },
+            filters=filters,
+        )
 
     def __iter__(self) -> Generator[Path, None, None]:
         yield from self.go()
@@ -67,7 +81,7 @@ class Crawler:
                 if (
                     child_path.is_file()
                     and not excludes_spec.match_file(child_path)
-                    and self.filter(child_path)
+                    and (self.filter is None or self.filter(child_path))
                 ):
                     if self.extensions is None or child_path.suffix in self.extensions:
                         yield child_path
