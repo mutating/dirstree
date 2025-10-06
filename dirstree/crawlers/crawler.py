@@ -8,7 +8,6 @@ from cantok import AbstractToken, DefaultToken
 from dirstree.crawlers.abstract import AbstractCrawler
 
 
-# TODO: add a special class to crawl only throw python files
 # TODO: add typing tests
 class Crawler(AbstractCrawler):
     """
