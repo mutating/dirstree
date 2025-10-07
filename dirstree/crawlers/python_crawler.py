@@ -11,7 +11,7 @@ class PythonCrawler(Crawler):
         self,
         path: Union[str, Path],
         exclude: Optional[List[str]] = None,
-        filter: Callable[[Path], bool] = None,
+        filter: Optional[Callable[[Path], bool]] = None,
         token: AbstractToken = DefaultToken(),
     ) -> None:
         super().__init__(
