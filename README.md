@@ -82,6 +82,7 @@ Also, if you only need Python files, you can use a special class to bypass them 
 
 ```python
 from dirstree import PythonCrawler
+
 crawler = PythonCrawler('.')  # Iterate only on .py files.
 ```
 
