@@ -80,38 +80,6 @@ def test_python_crawler_repr(crawler, expected_repr):
     assert repr(crawler) == expected_repr
 
 
-@pytest.mark.parametrize(
-    ['n'],
-    [
-        (0,),
-        (1,),
-        (2,),
-        (3,),
-    ],
-)
-def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: int):
-    index = 0
-
-    def filter(path: Path) -> bool:
-        nonlocal index
-        index += 1
-        return True
-
-    def condition() -> bool:
-        if index == n:
-            result = True
-        else:
-            result = False
-
-        return result
-
-    token = ConditionToken(condition)
-
-    crawler = PythonCrawler(crawl_directory_path, token=token, filter=filter)
-
-    assert list(PythonCrawler(crawl_directory_path))[:n] == list(crawler)
-
-
 def test_sum_of_same_python_crawlers(crawl_directory_path: Union[str, Path]):
     assert list(PythonCrawler(crawl_directory_path) + PythonCrawler(crawl_directory_path)) == list(PythonCrawler(crawl_directory_path))
 

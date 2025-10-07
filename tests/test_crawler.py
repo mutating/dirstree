@@ -205,6 +205,13 @@ def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path
 
 
 @pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+@pytest.mark.parametrize(
     ['n'],
     [
         (0,),
@@ -213,7 +220,7 @@ def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path
         (3,),
     ],
 )
-def test_cancel_after_n_iteranions_2(crawl_directory_path: Union[str, Path], n: int):
+def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: int, factory: Type[Crawler]):
     index = 0
 
     def filter(path: Path) -> bool:
@@ -231,9 +238,9 @@ def test_cancel_after_n_iteranions_2(crawl_directory_path: Union[str, Path], n: 
 
     token = ConditionToken(condition)
 
-    crawler = Crawler(crawl_directory_path, token=token, filter=filter)
+    crawler = factory(crawl_directory_path, token=token, filter=filter)
 
-    assert list(Crawler(crawl_directory_path))[:n] == list(crawler)
+    assert list(factory(crawl_directory_path))[:n] == list(crawler)
 
 
 @pytest.mark.parametrize(
