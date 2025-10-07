@@ -213,35 +213,27 @@ def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path
         (3,),
     ],
 )
-def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: int):
+def test_cancel_after_n_iteranions_2(crawl_directory_path: Union[str, Path], n: int):
     index = 0
 
-    def condition() -> bool:
+    def filter(path: Path) -> bool:
         nonlocal index
+        index += 1
+        return True
 
-        if index == n + 1:
+    def condition() -> bool:
+        if index == n:
             result = True
         else:
             result = False
-
-        index += 1
 
         return result
 
     token = ConditionToken(condition)
 
-    crawler = Crawler(crawl_directory_path, token=token)
+    crawler = Crawler(crawl_directory_path, token=token, filter=filter)
 
-    first_result = list(Crawler(crawl_directory_path))[:n]
-    second_result = list(crawler)
-
-    first_result.sort()
-    second_result.sort()
-
-    print(first_result)
-    print(second_result)
-
-    assert first_result == second_result
+    assert list(Crawler(crawl_directory_path))[:n] == list(crawler)
 
 
 @pytest.mark.parametrize(
