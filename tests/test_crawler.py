@@ -6,7 +6,6 @@ import pytest
 import full_match
 from cantok import ConditionToken, SimpleToken, DefaultToken
 
-from dirstree.crawlers.abstract import AbstractCrawler
 from dirstree import Crawler, PythonCrawler
 
 
