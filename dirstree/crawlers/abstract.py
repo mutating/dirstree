@@ -11,7 +11,7 @@ class AbstractCrawler(ABC):
 
     def __add__(self, other: 'AbstractCrawler') -> 'AbstractCrawler':
         if not isinstance(other, AbstractCrawler):
-            raise TypeError(f"Cannot add {type(self)} and {type(other)}.")
+            raise TypeError(f"Cannot add {type(self).__name__} and {type(other).__name__}.")
 
         from dirstree.crawlers.group import CrawlersGroup
 
