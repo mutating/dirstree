@@ -308,3 +308,6 @@ def test_sum_usual_crawler_and_python_crawler():
 def test_try_to_sum_with_not_crawler():
     with pytest.raises(TypeError, match=full_match("Cannot add Crawler and int.")):
         Crawler('.') + 1
+
+    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and str.")):
+        Crawler('.') + 'kek'
