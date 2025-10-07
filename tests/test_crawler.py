@@ -6,6 +6,7 @@ import pytest
 import full_match
 from cantok import ConditionToken, SimpleToken, DefaultToken
 
+from dirstree.crawlers.abstract import AbstractCrawler
 from dirstree import Crawler, PythonCrawler
 
 
@@ -130,23 +131,44 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
         (Crawler('.', token=ConditionToken(lambda: True)), "Crawler('.', token=ConditionToken(λ))"),
     ],
 )
-def test_repr(crawler, expected_repr):
+def test_repr(crawler: Crawler, expected_repr: str):
     assert repr(crawler) == expected_repr
 
 
-def test_iter():
-    crawler = Crawler('.')
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_iter(factory: Crawler):
+    crawler = factory('.')
 
     assert list(crawler) == list(crawler.go())
 
 
-def test_crawl_repeat():
-    crawler = Crawler('.')
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_crawl_repeat(factory: Crawler):
+    crawler = factory('.')
 
     assert list(crawler) == list(crawler)
 
 
-def test_filter_first():
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_filter_first(factory: Crawler):
     index = 0
 
     def filter(path) -> bool:
@@ -161,17 +183,24 @@ def test_filter_first():
 
         return result
 
-    assert list(Crawler('.'))[1:] == list(Crawler('.', filter=filter))
+    assert list(factory('.'))[1:] == list(factory('.', filter=filter))
 
 
-def test_argument_of_filter_is_path_object(crawl_directory_path):
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path], factory: Crawler):
     collector = []
 
     def filter(path):
         collector.append(path)
         return True
 
-    crawler = Crawler(crawl_directory_path, filter=filter)
+    crawler = factory(crawl_directory_path, filter=filter)
 
     assert list(crawler) == collector
 
@@ -207,13 +236,27 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
     assert list(Crawler(crawl_directory_path))[:n] == list(crawler)
 
 
-def test_cancelled_token(crawl_directory_path: Union[str, Path]):
-    assert list(Crawler(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Crawler):
+    assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
 
 
-def test_default_token(crawl_directory_path: Union[str, Path]):
-    assert list(Crawler(crawl_directory_path, token=DefaultToken())) == list(
-        Crawler(crawl_directory_path)
+@pytest.mark.parametrize(
+    ['factory'],
+    [
+        (Crawler,),
+        (PythonCrawler,),
+    ]
+)
+def test_default_token(crawl_directory_path: Union[str, Path], factory: Crawler):
+    assert list(factory(crawl_directory_path, token=DefaultToken())) == list(
+        factory(crawl_directory_path)
     )
 
 
