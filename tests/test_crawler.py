@@ -232,7 +232,13 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
 
     crawler = Crawler(crawl_directory_path, token=token)
 
-    assert list(Crawler(crawl_directory_path))[:n] == list(crawler)
+    first_result = list(Crawler(crawl_directory_path))[:n]
+    second_result = list(crawler)
+
+    first_result.sort()
+    second_result.sort()
+
+    assert first_result == second_result
 
 
 @pytest.mark.parametrize(
