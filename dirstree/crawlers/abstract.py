@@ -13,9 +13,9 @@ class AbstractCrawler(ABC):
         if not isinstance(other, AbstractCrawler):
             raise TypeError(f"Cannot add {type(self)} and {type(other)}.")
 
-        from dirstree.crawlers.group import CrawlerGroup
+        from dirstree.crawlers.group import CrawlersGroup
 
-        return CrawlerGroup([self, other])
+        return CrawlersGroup([self, other])
 
     @abstractmethod
     def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
