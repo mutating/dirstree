@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Union
+from typing import Union, Type
 
 import pytest
 import full_match
@@ -141,7 +141,7 @@ def test_repr(crawler: Crawler, expected_repr: str):
         (PythonCrawler,),
     ]
 )
-def test_iter(factory: Crawler):
+def test_iter(factory: Type[Crawler]):
     crawler = factory('.')
 
     assert list(crawler) == list(crawler.go())
@@ -154,7 +154,7 @@ def test_iter(factory: Crawler):
         (PythonCrawler,),
     ]
 )
-def test_crawl_repeat(factory: Crawler):
+def test_crawl_repeat(factory: Type[Crawler]):
     crawler = factory('.')
 
     assert list(crawler) == list(crawler)
@@ -167,7 +167,7 @@ def test_crawl_repeat(factory: Crawler):
         (PythonCrawler,),
     ]
 )
-def test_filter_first(factory: Crawler):
+def test_filter_first(factory: Type[Crawler]):
     index = 0
 
     def filter(path) -> bool:
@@ -192,7 +192,7 @@ def test_filter_first(factory: Crawler):
         (PythonCrawler,),
     ]
 )
-def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path], factory: Crawler):
+def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     collector = []
 
     def filter(path):
@@ -251,7 +251,7 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
         (PythonCrawler,),
     ]
 )
-def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Crawler):
+def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
 
 
@@ -262,7 +262,7 @@ def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Crawle
         (PythonCrawler,),
     ]
 )
-def test_default_token(crawl_directory_path: Union[str, Path], factory: Crawler):
+def test_default_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     assert list(factory(crawl_directory_path, token=DefaultToken())) == list(
         factory(crawl_directory_path)
     )
