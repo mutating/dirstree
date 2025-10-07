@@ -1,4 +1,4 @@
-# dirstree: an another library for iterating through the contents of a directory
+# an another library for iterating through the contents of a directory
 ![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
 
 [![Downloads](https://static.pepy.tech/badge/dirstree/month)](https://pepy.tech/project/dirstree)
