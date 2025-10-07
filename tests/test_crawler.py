@@ -238,6 +238,9 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
     first_result.sort()
     second_result.sort()
 
+    print(first_result)
+    print(second_result)
+
     assert first_result == second_result
 
 
