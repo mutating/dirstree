@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, Collection, Generator, Callable
+from typing import List, Dict, Optional, Union, Collection, Generator, Callable, Any
 from pathlib import Path
 
 import pathspec
@@ -46,7 +46,7 @@ class Crawler(AbstractCrawler):
         self.filter = filter
         self.token = token
 
-        self.addictional_repr_filters = {}
+        self.addictional_repr_filters: Dict[str, Callable[[Any], bool]] = {}
 
     def __repr__(self) -> str:
         filters={
