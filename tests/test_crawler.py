@@ -303,3 +303,8 @@ def test_sum_usual_crawler_and_python_crawler():
     default_result.sort()
 
     assert sum_result == default_result
+
+
+def test_try_to_sum_with_not_crawler():
+    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and int.")):
+        Crawler('.') + 1
