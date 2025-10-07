@@ -1,4 +1,3 @@
-# an another library for iterating through the contents of a directory
 ![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
 
 [![Downloads](https://static.pepy.tech/badge/dirstree/month)](https://pepy.tech/project/dirstree)
@@ -13,7 +12,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pomponchik/dirstree)
 
-There are many libraries for traversing directories. You can also do this using the standard library. This particular library is very different in that:
+There are many libraries for traversing directories. You can also do this using the standard library. This particular library is a bit different in that:
 
 - ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom callables.
 - 🐍 Natively works with both [`Path` objects](https://docs.python.org/3/library/pathlib.html#basic-use) from the standard library and strings.
