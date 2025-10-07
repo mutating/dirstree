@@ -271,7 +271,7 @@ def test_default_token(crawl_directory_path: Union[str, Path], factory: Crawler)
 def test_pass_not_starting_with_dot_extension(crawl_directory_path: Union[str, Path]):
     with pytest.raises(
         ValueError,
-        match=full_match(
+        match=full_match(  # type: ignore[operator]
             'The line with the file extension must start with a dot. You have passed: "txt".'
         ),
     ):
