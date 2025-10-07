@@ -92,7 +92,7 @@ def test_python_crawler_repr(crawler, expected_repr):
 def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: int):
     index = 0
 
-    def filter(path: str) -> bool:
+    def filter(path: Path) -> bool:
         nonlocal index
         index += 1
         return True
