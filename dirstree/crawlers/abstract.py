@@ -19,4 +19,4 @@ class AbstractCrawler(ABC):
 
     @abstractmethod
     def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
-        pass
+        ...  # pragma: no cover
