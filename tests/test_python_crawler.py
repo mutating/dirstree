@@ -110,3 +110,11 @@ def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: in
     crawler = PythonCrawler(crawl_directory_path, token=token, filter=filter)
 
     assert list(PythonCrawler(crawl_directory_path))[:n] == list(crawler)
+
+
+def test_sum_of_same_python_crawlers(crawl_directory_path: Union[str, Path]):
+    assert list(PythonCrawler(crawl_directory_path) + PythonCrawler(crawl_directory_path)) == list(PythonCrawler(crawl_directory_path))
+
+
+def test_sum_of_same_python_crawlers_for_current_directory():
+    assert list(PythonCrawler('.') + PythonCrawler('.')) == list(PythonCrawler('.'))
