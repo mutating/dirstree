@@ -46,7 +46,7 @@ class Crawler(AbstractCrawler):
         self.filter = filter
         self.token = token
 
-        self.addictional_repr_filters: Dict[Union[str, int], Callable[[Any], bool]] = {}
+        self.addictional_repr_filters: Dict[str, Callable[[Any], bool]] = {}
 
     def __repr__(self) -> str:
         filters={
