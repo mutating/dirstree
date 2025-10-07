@@ -17,6 +17,7 @@ There are many libraries for traversing directories. You can also do this using 
 - ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom callables.
 - 🐍 Natively works with both [`Path` objects](https://docs.python.org/3/library/pathlib.html#basic-use) from the standard library and strings.
 - ❌ Support for [cancellation tokens](https://github.com/pomponchik/cantok).
+- 👯‍♂️ Combining multiple crawling methods in one object.
 
 
 ## Table of contents
@@ -25,6 +26,8 @@ There are many libraries for traversing directories. You can also do this using 
 - [**Basic usage**](#basic-usage)
 - [**Filtering**](#filtering)
 - [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
+- [**Combination**](#combination)
+
 
 ## Installation
 
@@ -75,6 +78,13 @@ To set the file extensions you are interested in, use the `extensions` parameter
 crawler = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
 
+Also, if you only need Python files, you can use a special class to bypass them only, without specifying extensions:
+
+```python
+from dirstree import PythonCrawler
+crawler = PythonCrawler('.')  # Iterate only on .py files.
+```
+
 To specify which files and directories you do NOT want to iterate over, use the `exclude` parameter:
 
 ```python
@@ -113,3 +123,17 @@ for path in crawler.go(token=TimeoutToken(0.0001)): # Limit the iteration time t
 ```
 
 > ↑ Follow these rules to avoid accidentally "baking" an expired token inside a crawler object.
+
+
+## Combination
+
+You can combine multiple crawler objects into one using the usual addition operator, like this:
+
+```python
+for path in Crawler('../dirstree') + Crawler('../cantok'):
+    print(path)
+```
+
+> ↑ The paths that you will iterate on will be automatically deduplicated.
+
+> ↑ You can also impose arbitrary restrictions on each of the summed objects, all of them will be taken into account.
