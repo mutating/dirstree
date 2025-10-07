@@ -267,3 +267,26 @@ def test_pass_not_starting_with_dot_extension(crawl_directory_path: Union[str, P
         ),
     ):
         Crawler(crawl_directory_path, extensions=['txt'])
+
+
+def test_deduplication_with_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
+    assert list(Crawler(crawl_directory_path) + Crawler(crawl_directory_path)) == list(Crawler(crawl_directory_path))
+
+
+def test_deduplication_with_sum_of_crawlers_and_group(crawl_directory_path: Union[str, Path]):
+    assert list(Crawler(crawl_directory_path) + (Crawler(crawl_directory_path) + Crawler(crawl_directory_path))) == list(Crawler(crawl_directory_path))
+
+
+def test_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
+    first_crawler = Crawler(crawl_directory_path, extensions=['.py'])
+    second_crawler = Crawler(crawl_directory_path, extensions=['.txt'])
+
+    supercrawler = first_crawler + second_crawler
+
+    supercrawlers_result = list(supercrawler)
+    simplecrawlers_result = list(Crawler(crawl_directory_path))
+
+    supercrawlers_result.sort()
+    simplecrawlers_result.sort()
+
+    assert supercrawlers_result == simplecrawlers_result
