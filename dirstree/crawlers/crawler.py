@@ -66,7 +66,7 @@ class Crawler(AbstractCrawler):
                 'filter': self.filter,
                 'token': self.token,
             },
-            filters=filters,
+            filters=filters,  # type: ignore[arg-type]
         )
 
     def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
