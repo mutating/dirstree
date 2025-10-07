@@ -290,3 +290,16 @@ def test_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
     simplecrawlers_result.sort()
 
     assert supercrawlers_result == simplecrawlers_result
+
+
+def test_sum_usual_crawler_and_python_crawler():
+    first_crawler = Crawler('.', extensions=['.py'])
+    second_crawler = Crawler('.', filter = lambda x: x.suffix != '.py')
+
+    sum_result = list(first_crawler + second_crawler)
+    default_result = list(Crawler('.'))
+
+    sum_result.sort()
+    default_result.sort()
+
+    assert sum_result == default_result
