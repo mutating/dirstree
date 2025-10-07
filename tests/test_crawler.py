@@ -128,6 +128,8 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
         (Crawler('.', filter=custom_filter), "Crawler('.', filter=custom_filter)"),
         (Crawler('.', filter=lambda x: True), "Crawler('.', filter=λ)"),
         (Crawler('.', token=ConditionToken(lambda: True)), "Crawler('.', token=ConditionToken(λ))"),
+        (Crawler('../dirstree') + Crawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), Crawler('../cantok')])"),
+        (Crawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), PythonCrawler('../cantok')])"),
     ],
 )
 def test_repr(crawler: Crawler, expected_repr: str):

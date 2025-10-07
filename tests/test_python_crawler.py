@@ -74,6 +74,7 @@ def test_crawl_test_directory_with_exclude_inits(
         (PythonCrawler('.', filter=custom_filter), "PythonCrawler('.', filter=custom_filter)"),
         (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=λ)"),
         (PythonCrawler('.', token=ConditionToken(lambda: True)), "PythonCrawler('.', token=ConditionToken(λ))"),
+        (PythonCrawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([PythonCrawler('../dirstree'), PythonCrawler('../cantok')])"),
     ],
 )
 def test_python_crawler_repr(crawler, expected_repr):
