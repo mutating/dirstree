@@ -27,7 +27,7 @@ class Crawler(AbstractCrawler):
 
     def __init__(
         self,
-        path: Union[str, Path],
+        *paths: Union[str, Path],
         extensions: Optional[Collection[str]] = None,
         exclude: Optional[List[str]] = None,
         filter: Optional[Callable[[Path], bool]] = None,
@@ -40,7 +40,7 @@ class Crawler(AbstractCrawler):
                         f'The line with the file extension must start with a dot. You have passed: "{extension}".'
                     )
 
-        self.path = path
+        self.paths = paths
         self.extensions = extensions
         self.exclude = exclude if exclude is not None else []
         self.filter = filter
@@ -59,7 +59,7 @@ class Crawler(AbstractCrawler):
 
         return descript_data_object(
             self.__class__.__name__,
-            (self.path,),
+            self.paths,
             {
                 'extensions': self.extensions,
                 'exclude': self.exclude,
@@ -71,18 +71,22 @@ class Crawler(AbstractCrawler):
 
     def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
         token = token + self.token
-        base_path = Path(self.path)
+
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
 
-        if token:
-            for child_path in base_path.rglob('*'):
-                if (
-                    child_path.is_file()
-                    and not excludes_spec.match_file(child_path)
-                    and (self.extensions is None or child_path.suffix in self.extensions)
-                    and (self.filter is None or self.filter(child_path))
-                ):
-                    yield child_path
+        for path in self.paths:
+            base_path = Path(path)
+            if token:
+                for child_path in base_path.rglob('*'):
+                    if (
+                        child_path.is_file()
+                        and not excludes_spec.match_file(child_path)
+                        and (self.extensions is None or child_path.suffix in self.extensions)
+                        and (self.filter is None or self.filter(child_path))
+                    ):
+                        yield child_path
 
-                if not token:
-                    break
+                    if not token:
+                        break
+            else:
+                break
