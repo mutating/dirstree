@@ -321,3 +321,11 @@ def test_try_to_sum_with_not_crawler():
 
     with pytest.raises(TypeError, match=full_match("Cannot add Crawler and str.")):
         Crawler('.') + 'kek'
+
+
+def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
+    list(Crawler(crawl_directory_path, second_crawl_directory_path)) == list(Crawler(crawl_directory_path)) + list(Crawler(second_crawl_directory_path))
+
+
+def test_crawl_without_path():
+    assert list(Crawler()) == []

@@ -7,3 +7,8 @@ import pytest
 @pytest.fixture(params=[str, Path])
 def crawl_directory_path(request):
     return request.param(os.path.join('tests', 'test_files', 'walk_it'))
+
+
+@pytest.fixture(params=[str, Path])
+def second_crawl_directory_path(request):
+    return request.param(os.path.join('tests', 'test_files', 'walk_it_2'))

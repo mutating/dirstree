@@ -138,3 +138,12 @@ for path in Crawler('../dirstree') + Crawler('../cantok'):
 > ↑ The paths that you will iterate on will be automatically deduplicated.
 
 > ↑ You can also impose arbitrary restrictions on each of the summed objects, all of them will be taken into account.
+
+You can also pass multiple paths to a single crawler object:
+
+```python
+for path in Crawler('../dirstree', '../cantok'):
+    print(path)
+```
+
+> ↑ In this case, there is no deduplication of paths.
