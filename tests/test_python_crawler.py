@@ -91,3 +91,7 @@ def test_sum_of_same_python_crawlers_for_current_directory():
 
 def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
     list(PythonCrawler(crawl_directory_path, second_crawl_directory_path)) == list(PythonCrawler(crawl_directory_path)) + list(PythonCrawler(second_crawl_directory_path))
+
+
+def test_crawl_without_path():
+    assert list(PythonCrawler()) == []
