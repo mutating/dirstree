@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Union, Type
 
 import pytest
-import full_match
+from full_match import match
 from cantok import ConditionToken, SimpleToken, DefaultToken
 
 from dirstree import Crawler, PythonCrawler
@@ -272,7 +272,7 @@ def test_default_token(crawl_directory_path: Union[str, Path], factory: Type[Cra
 def test_pass_not_starting_with_dot_extension(crawl_directory_path: Union[str, Path]):
     with pytest.raises(
         ValueError,
-        match=full_match(  # type: ignore[operator]
+        match=match(  # type: ignore[operator]
             'The line with the file extension must start with a dot. You have passed: "txt".'
         ),
     ):
@@ -316,10 +316,10 @@ def test_sum_usual_crawler_and_python_crawler():
 
 
 def test_try_to_sum_with_not_crawler():
-    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and int.")):
+    with pytest.raises(TypeError, match=match("Cannot add Crawler and int.")):
         Crawler('.') + 1
 
-    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and str.")):
+    with pytest.raises(TypeError, match=match("Cannot add Crawler and str.")):
         Crawler('.') + 'kek'
 
 
