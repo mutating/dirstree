@@ -1,4 +1,5 @@
-![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
+<details>
+  <summary>ⓘ</summary>
 
 [![Downloads](https://static.pepy.tech/badge/dirstree/month)](https://pepy.tech/project/dirstree)
 [![Downloads](https://static.pepy.tech/badge/dirstree)](https://pepy.tech/project/dirstree)
@@ -11,6 +12,10 @@
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pomponchik/dirstree)
+
+</details>
+
+![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
 
 There are many libraries for traversing directories. You can also do this using the standard library. This particular library is a bit different in that:
 
