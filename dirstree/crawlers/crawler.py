@@ -4,6 +4,7 @@ from typing import Any, Callable, Collection, Dict, Generator, List, Optional, U
 import pathspec
 from cantok import AbstractToken, DefaultToken
 from printo import descript_data_object, not_none
+from sigmatch import PossibleCallMatcher
 
 from dirstree.crawlers.abstract import AbstractCrawler
 
@@ -39,6 +40,8 @@ class Crawler(AbstractCrawler):
                     raise ValueError(
                         f'The line with the file extension must start with a dot. You have passed: "{extension}".',
                     )
+        if filter is not None:
+            PossibleCallMatcher('.').match(filter, raise_exception=True)
 
         self.paths = paths
         self.extensions = extensions

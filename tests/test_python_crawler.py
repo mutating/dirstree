@@ -5,6 +5,8 @@ from typing import Union
 
 import pytest
 from cantok import ConditionToken
+from full_match import match
+from sigmatch.errors import SignatureMismatchError
 
 from dirstree import Crawler, PythonCrawler
 
@@ -95,3 +97,8 @@ def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_
 
 def test_crawl_without_path():
     assert list(PythonCrawler()) == []
+
+
+def test_check_filter_signature():
+    with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
+        PythonCrawler(filter=lambda: None)
