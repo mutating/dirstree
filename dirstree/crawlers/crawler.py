@@ -1,9 +1,9 @@
-from typing import List, Dict, Optional, Union, Collection, Generator, Callable, Any
 from pathlib import Path
+from typing import Any, Callable, Collection, Dict, Generator, List, Optional, Union
 
 import pathspec
-from printo import descript_data_object, not_none
 from cantok import AbstractToken, DefaultToken
+from printo import descript_data_object, not_none
 
 from dirstree.crawlers.abstract import AbstractCrawler
 
@@ -30,14 +30,14 @@ class Crawler(AbstractCrawler):
         *paths: Union[str, Path],
         extensions: Optional[Collection[str]] = None,
         exclude: Optional[List[str]] = None,
-        filter: Optional[Callable[[Path], bool]] = None,
-        token: AbstractToken = DefaultToken(),
+        filter: Optional[Callable[[Path], bool]] = None,  # noqa: A002
+        token: AbstractToken = DefaultToken(),  # noqa: B008
     ) -> None:
         if extensions is not None:
             for extension in extensions:
                 if not extension.startswith('.'):
                     raise ValueError(
-                        f'The line with the file extension must start with a dot. You have passed: "{extension}".'
+                        f'The line with the file extension must start with a dot. You have passed: "{extension}".',
                     )
 
         self.paths = paths
@@ -69,7 +69,7 @@ class Crawler(AbstractCrawler):
             filters=filters,  # type: ignore[arg-type]
         )
 
-    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
+    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:  # noqa: B008
         token = token + self.token
 
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)

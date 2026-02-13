@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Generator
 from pathlib import Path
+from typing import Generator
 
 from cantok import AbstractToken, DefaultToken
 
@@ -13,10 +13,10 @@ class AbstractCrawler(ABC):
         if not isinstance(other, AbstractCrawler):
             raise TypeError(f"Cannot add {type(self).__name__} and {type(other).__name__}.")
 
-        from dirstree.crawlers.group import CrawlersGroup
+        from dirstree.crawlers.group import CrawlersGroup  # noqa: PLC0415
 
         return CrawlersGroup([self, other])
 
     @abstractmethod
-    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
+    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:  # noqa: B008
         ...  # pragma: no cover
