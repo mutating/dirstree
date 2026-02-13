@@ -1,15 +1,16 @@
 import os
 from pathlib import Path
-from typing import Union, Type
+from typing import Type, Union
 
 import pytest
-import full_match
-from cantok import ConditionToken, SimpleToken, DefaultToken
+from cantok import ConditionToken, DefaultToken, SimpleToken
+from full_match import match
+from sigmatch.errors import SignatureMismatchError
 
 from dirstree import Crawler, PythonCrawler
 
 
-def custom_filter(path: Path) -> bool:
+def custom_filter(path: Path) -> bool:  # noqa: ARG001
     return True
 
 
@@ -22,10 +23,10 @@ def test_crawl_test_directory_with_default_extensions(
         os.path.join('tests', 'test_files', 'walk_it', '__init__.py'),
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt',
         ),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
         os.path.join('tests', 'test_files', 'walk_it', 'nested_folder', '__init__.py'),
     ]
@@ -44,7 +45,7 @@ def test_crawl_test_directory_with_txt_extension(
 
     assert [str(x) for x in crawler] == [
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt',
         ),
     ]
 
@@ -56,7 +57,7 @@ def test_crawl_test_directory_with_py_extension(crawl_directory_path: Union[str,
         os.path.join('tests', 'test_files', 'walk_it', '__init__.py'),
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
         os.path.join('tests', 'test_files', 'walk_it', 'nested_folder', '__init__.py'),
     ]
@@ -76,7 +77,7 @@ def test_crawl_test_directory_with_exclude_with_py_extension(
     assert [str(x) for x in crawler] == [
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
     ]
 
@@ -89,10 +90,10 @@ def test_crawl_test_directory_with_exclude_patterns_without_extensions(
     expected_paths = [
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt',
         ),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
     ]
     real_paths = [str(x) for x in crawler]
@@ -107,18 +108,18 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
     crawl_directory_path: Union[str, Path],
 ):
     crawler = Crawler(
-        crawl_directory_path, extensions=['.txt'], exclude=['__init__.py']
+        crawl_directory_path, extensions=['.txt'], exclude=['__init__.py'],
     )
 
     assert [str(x) for x in crawler] == [
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'non_python_file.txt',
         ),
     ]
 
 
 @pytest.mark.parametrize(
-    ['crawler', 'expected_repr'],
+    ('crawler', 'expected_repr'),
     [
         (Crawler('.'), "Crawler('.')"),
         (Crawler('usr/bin'), "Crawler('usr/bin')"),
@@ -126,7 +127,7 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
         (Crawler('.', exclude=['*.py'], extensions=['.py']), "Crawler('.', extensions=['.py'], exclude=['*.py'])"),
         (Crawler('.', exclude=['*.py']), "Crawler('.', exclude=['*.py'])"),
         (Crawler('.', filter=custom_filter), "Crawler('.', filter=custom_filter)"),
-        (Crawler('.', filter=lambda x: True), "Crawler('.', filter=λ)"),
+        (Crawler('.', filter=lambda x: True), "Crawler('.', filter=λ)"),  # noqa: ARG005
         (Crawler('.', token=ConditionToken(lambda: True)), "Crawler('.', token=ConditionToken(λ))"),
         (Crawler('../dirstree') + Crawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), Crawler('../cantok')])"),
         (Crawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), PythonCrawler('../cantok')])"),
@@ -137,11 +138,11 @@ def test_repr(crawler: Crawler, expected_repr: str):
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_iter(factory: Type[Crawler]):
     crawler = factory('.')
@@ -150,11 +151,11 @@ def test_iter(factory: Type[Crawler]):
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_crawl_repeat(factory: Type[Crawler]):
     crawler = factory('.')
@@ -163,117 +164,109 @@ def test_crawl_repeat(factory: Type[Crawler]):
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_filter_first(factory: Type[Crawler]):
     index = 0
 
-    def filter(path) -> bool:
+    def empty_filter(path) -> bool:  # noqa: ARG001
         nonlocal index
 
-        if index == 0:
-            result = False
-        else:
-            result = True
+        result = index != 0
 
         index += 1
 
         return result
 
-    assert list(factory('.'))[1:] == list(factory('.', filter=filter))
+    assert list(factory('.'))[1:] == list(factory('.', filter=empty_filter))
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     collector = []
 
-    def filter(path):
+    def empty_filter(path):
         collector.append(path)
         return True
 
-    crawler = factory(crawl_directory_path, filter=filter)
+    crawler = factory(crawl_directory_path, filter=empty_filter)
 
     assert list(crawler) == collector
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 @pytest.mark.parametrize(
-    ['n'],
+    'n',
     [
-        (0,),
-        (1,),
-        (2,),
-        (3,),
+        0,
+        1,
+        2,
+        3,
     ],
 )
 def test_cancel_after_n_iteranions(crawl_directory_path: Union[str, Path], n: int, factory: Type[Crawler]):
     index = 0
 
-    def filter(path: Path) -> bool:
+    def empty_filter(path: Path) -> bool:  # noqa: ARG001
         nonlocal index
         index += 1
         return True
 
     def condition() -> bool:
-        if index == n:
-            result = True
-        else:
-            result = False
-
-        return result
+        return index == n
 
     token = ConditionToken(condition)
 
-    crawler = factory(crawl_directory_path, token=token, filter=filter)
+    crawler = factory(crawl_directory_path, token=token, filter=empty_filter)
 
     assert list(factory(crawl_directory_path))[:n] == list(crawler)
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
 
 
 @pytest.mark.parametrize(
-    ['factory'],
+    'factory',
     [
-        (Crawler,),
-        (PythonCrawler,),
-    ]
+        Crawler,
+        PythonCrawler,
+    ],
 )
 def test_default_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
     assert list(factory(crawl_directory_path, token=DefaultToken())) == list(
-        factory(crawl_directory_path)
+        factory(crawl_directory_path),
     )
 
 
 def test_pass_not_starting_with_dot_extension(crawl_directory_path: Union[str, Path]):
     with pytest.raises(
         ValueError,
-        match=full_match(  # type: ignore[operator]
-            'The line with the file extension must start with a dot. You have passed: "txt".'
+        match=match(  # type: ignore[operator]
+            'The line with the file extension must start with a dot. You have passed: "txt".',
         ),
     ):
         Crawler(crawl_directory_path, extensions=['txt'])
@@ -316,16 +309,21 @@ def test_sum_usual_crawler_and_python_crawler():
 
 
 def test_try_to_sum_with_not_crawler():
-    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and int.")):
+    with pytest.raises(TypeError, match=match("Cannot add Crawler and int.")):
         Crawler('.') + 1
 
-    with pytest.raises(TypeError, match=full_match("Cannot add Crawler and str.")):
+    with pytest.raises(TypeError, match=match("Cannot add Crawler and str.")):
         Crawler('.') + 'kek'
 
 
 def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
-    list(Crawler(crawl_directory_path, second_crawl_directory_path)) == list(Crawler(crawl_directory_path)) + list(Crawler(second_crawl_directory_path))
+    assert list(Crawler(crawl_directory_path, second_crawl_directory_path)) == list(Crawler(crawl_directory_path)) + list(Crawler(second_crawl_directory_path))
 
 
 def test_crawl_without_path():
     assert list(Crawler()) == []
+
+
+def test_check_filter_signature():
+    with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
+        Crawler(filter=lambda: None)

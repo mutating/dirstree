@@ -1,5 +1,5 @@
-from typing import List, Generator
 from pathlib import Path
+from typing import Generator, List
 
 from cantok import AbstractToken, DefaultToken
 from printo import descript_data_object
@@ -11,14 +11,14 @@ class CrawlersGroup(AbstractCrawler):
     def __init__(self, crawlers: List[AbstractCrawler]) -> None:
         self.crawlers = crawlers
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return descript_data_object(
             type(self).__name__,
             (self.crawlers,),
             {},
         )
 
-    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:
+    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:  # noqa: B008
         memory = set()
 
         for crawler in self.crawlers:

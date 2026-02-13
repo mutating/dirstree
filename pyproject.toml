@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dirstree"
-version = "0.0.3"
+version = "0.0.4"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Another library for iterating through the contents of a directory'
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ['pathspec==0.12.1', 'printo==0.0.8', 'cantok==0.0.32']
+dependencies = ['pathspec==0.12.1', 'printo>=0.0.10', 'cantok==0.0.32', 'sigmatch>=0.0.6']
 
 classifiers = [
     "Operating System :: OS Independent",
@@ -25,6 +25,8 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: Free Threading',
+    'Programming Language :: Python :: Free Threading :: 3 - Stable',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
@@ -40,6 +42,11 @@ runner = "pytest"
 
 [tool.pytest.ini_options]
 markers = ["mypy_testing"]
+
+[tool.ruff]
+lint.ignore = ['E501', 'E712', 'PTH123', 'PTH118', 'PLR2004', 'PTH107', 'SIM105', 'SIM102', 'RET503', 'PLR0912', 'C901']
+lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "T20", "PT", "RSE", "RET", "SIM", "SLOT", "TID252", "ARG", "PTH", "I", "C90", "N", "E", "W", "D201", "D202", "D419", "F", "PL", "PLE", "PLR", "PLW", "RUF", "TRY201", "TRY400", "TRY401"]
+format.quote-style = "single"
 
 [project.urls]
 'Source' = 'https://github.com/pomponchik/dirstree'

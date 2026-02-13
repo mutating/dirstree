@@ -1,15 +1,17 @@
 import os
-from typing import Union
-from pathlib import Path
 from inspect import signature
+from pathlib import Path
+from typing import Union
 
 import pytest
 from cantok import ConditionToken
+from full_match import match
+from sigmatch.errors import SignatureMismatchError
 
 from dirstree import Crawler, PythonCrawler
 
 
-def custom_filter(path: Path) -> bool:
+def custom_filter(path: Path) -> bool:  # noqa: ARG001
     return True
 
 
@@ -29,7 +31,7 @@ def test_crawl_python_files_in_test_directory(
         os.path.join('tests', 'test_files', 'walk_it', '__init__.py'),
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
         os.path.join('tests', 'test_files', 'walk_it', 'nested_folder', '__init__.py'),
     ]
@@ -43,7 +45,7 @@ def test_crawl_python_files_in_test_directory(
 
 def test_python_crawler_is_same_as_crawler_with_python_extension(crawl_directory_path):
     assert list(PythonCrawler(crawl_directory_path)) == list(
-        Crawler(crawl_directory_path, extensions=['.py'])
+        Crawler(crawl_directory_path, extensions=['.py']),
     )
 
 
@@ -60,19 +62,19 @@ def test_crawl_test_directory_with_exclude_inits(
     assert [str(x) for x in crawler] == [
         os.path.join('tests', 'test_files', 'walk_it', 'simple_code.py'),
         os.path.join(
-            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py'
+            'tests', 'test_files', 'walk_it', 'nested_folder', 'python_file.py',
         ),
     ]
 
 
 @pytest.mark.parametrize(
-    ['crawler', 'expected_repr'],
+    ('crawler', 'expected_repr'),
     [
         (PythonCrawler('.'), "PythonCrawler('.')"),
         (PythonCrawler('usr/bin'), "PythonCrawler('usr/bin')"),
         (PythonCrawler('.', exclude=['*.py']), "PythonCrawler('.', exclude=['*.py'])"),
         (PythonCrawler('.', filter=custom_filter), "PythonCrawler('.', filter=custom_filter)"),
-        (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=λ)"),
+        (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=λ)"),  # noqa: ARG005
         (PythonCrawler('.', token=ConditionToken(lambda: True)), "PythonCrawler('.', token=ConditionToken(λ))"),
         (PythonCrawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([PythonCrawler('../dirstree'), PythonCrawler('../cantok')])"),
     ],
@@ -90,8 +92,13 @@ def test_sum_of_same_python_crawlers_for_current_directory():
 
 
 def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
-    list(PythonCrawler(crawl_directory_path, second_crawl_directory_path)) == list(PythonCrawler(crawl_directory_path)) + list(PythonCrawler(second_crawl_directory_path))
+    assert list(PythonCrawler(crawl_directory_path, second_crawl_directory_path)) == list(PythonCrawler(crawl_directory_path)) + list(PythonCrawler(second_crawl_directory_path))
 
 
 def test_crawl_without_path():
     assert list(PythonCrawler()) == []
+
+
+def test_check_filter_signature():
+    with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
+        PythonCrawler(filter=lambda: None)
