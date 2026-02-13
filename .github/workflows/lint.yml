@@ -44,7 +44,7 @@ jobs:
 
       - name: Run mypy
         shell: bash
-        run: mypy dirstree
+        run: mypy --strict dirstree
 
       - name: Run mypy for tests
         shell: bash
