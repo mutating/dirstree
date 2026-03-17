@@ -10,7 +10,7 @@ description = 'Another library for iterating through the contents of a directory
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    'printo>=0.0.10',
+    'printo>=0.0.22',
     'cantok==0.0.32',
     'sigmatch>=0.0.6',
     'pathspec==0.12.1',
