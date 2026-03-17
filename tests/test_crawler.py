@@ -127,7 +127,7 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
         (Crawler('.', exclude=['*.py'], extensions=['.py']), "Crawler('.', extensions=['.py'], exclude=['*.py'])"),
         (Crawler('.', exclude=['*.py']), "Crawler('.', exclude=['*.py'])"),
         (Crawler('.', filter=custom_filter), "Crawler('.', filter=custom_filter)"),
-        (Crawler('.', filter=lambda x: True), "Crawler('.', filter=λ)"),  # noqa: ARG005
+        (Crawler('.', filter=lambda x: True), "Crawler('.', filter=lambda x: True)"),  # noqa: ARG005
         (Crawler('.', token=ConditionToken(lambda: True)), "Crawler('.', token=ConditionToken(λ))"),
         (Crawler('../dirstree') + Crawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), Crawler('../cantok')])"),
         (Crawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([Crawler('../dirstree'), PythonCrawler('../cantok')])"),

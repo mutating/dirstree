@@ -3,7 +3,7 @@ from typing import Any, Callable, Collection, Dict, Generator, List, Optional, U
 
 import pathspec
 from cantok import AbstractToken, DefaultToken
-from printo import descript_data_object, not_none
+from printo import describe_data_object, not_none
 from sigmatch import PossibleCallMatcher
 
 from dirstree.crawlers.abstract import AbstractCrawler
@@ -60,7 +60,7 @@ class Crawler(AbstractCrawler):
         }
         filters.update(self.addictional_repr_filters)
 
-        return descript_data_object(
+        return describe_data_object(
             self.__class__.__name__,
             self.paths,
             {

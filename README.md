@@ -3,22 +3,22 @@
 
 [![Downloads](https://static.pepy.tech/badge/dirstree/month)](https://pepy.tech/project/dirstree)
 [![Downloads](https://static.pepy.tech/badge/dirstree)](https://pepy.tech/project/dirstree)
-[![Coverage Status](https://coveralls.io/repos/github/pomponchik/dirstree/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/dirstree?branch=main)
-[![Lines of code](https://sloc.xyz/github/pomponchik/dirstree/?category=code)](https://github.com/boyter/scc/)
-[![Hits-of-Code](https://hitsofcode.com/github/pomponchik/dirstree?branch=main)](https://hitsofcode.com/github/pomponchik/dirstree/view?branch=main)
-[![Test-Package](https://github.com/pomponchik/dirstree/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/dirstree/actions/workflows/tests_and_coverage.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mutating/dirstree/badge.svg?branch=main)](https://coveralls.io/github/mutating/dirstree?branch=main)
+[![Lines of code](https://sloc.xyz/github/mutating/dirstree/?category=code)](https://github.com/boyter/scc/)
+[![Hits-of-Code](https://hitsofcode.com/github/mutating/dirstree?branch=main)](https://hitsofcode.com/github/mutating/dirstree/view?branch=main)
+[![Test-Package](https://github.com/mutating/dirstree/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/mutating/dirstree/actions/workflows/tests_and_coverage.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/dirstree.svg)](https://pypi.python.org/pypi/dirstree)
 [![PyPI version](https://badge.fury.io/py/dirstree.svg)](https://badge.fury.io/py/dirstree)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pomponchik/dirstree)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mutating/dirstree)
 
 </details>
 
-![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
+![logo](https://raw.githubusercontent.com/mutating/dirstree/develop/docs/assets/logo_1.svg)
 
 
-There are many libraries for traversing directories. You can also do this using the standard library. This particular library is a bit different in that:
+There are many libraries for traversing directories. You can also do this using the standard library. What makes this library different:
 
 - ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom callables.
 - 🐍 Natively works with both [`Path` objects](https://docs.python.org/3/library/pathlib.html#basic-use) from the standard library and strings.
@@ -37,23 +37,23 @@ There are many libraries for traversing directories. You can also do this using 
 
 ## Installation
 
-You can install [`dirstree`](https://pypi.python.org/pypi/dirstree) using pip:
+You can install [`dirstree`](https://pypi.org/project/dirstree/) with `pip`:
 
 ```bash
 pip install dirstree
 ```
 
-You can also quickly try out this and other packages without having to install using [instld](https://github.com/pomponchik/instld).
+You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try out this package and others without installing them.
 
 
 ## Basic usage
 
-It's very easy to work with the library in your own code:
+The library is easy to use:
 
 - Create a crawler object, passing the path to the base directory and, if necessary, additional arguments.
 - Iterate through it.
 
-The simplest code example would look like this:
+The simplest example would look like this:
 
 ```python
 from dirstree import Crawler
@@ -64,12 +64,12 @@ for file in crawler:
     print(file)
 ```
 
-> ↑ Here we output recursively (that is, including the contents of nested directories) all files from the current directory. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
+> ↑ This recursively prints all files in the current directory, including files in nested directories. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
 
 
 ## Filtering
 
-Iterating through the files in the directory, you may not want to view all files, but only files of a certain type. To do this, ignore all other files. How to do it? There are 3 ways:
+Iterating through the files in the directory, you may not want to view all files, but only files of a certain type. To do this, ignore all other files. How to do it? There are three ways:
 
 - Bypass only files with the specified [extensions](https://en.wikipedia.org/wiki/Filename_extension), such as `.txt`, `.doc`, or `.py`.
 - Bypass files whose paths follow a specific text pattern.
@@ -103,7 +103,7 @@ crawler = Crawler('.', exclude=['.git', 'venv'])  # Exclude ".git" and "venv" di
 If you need a universal way to filter out unnecessary paths, pass your function as the `filter` parameter:
 
 ```python
-crawler = Crawler('.', filter = lambda path: len(str(path)) == 7)  # Iterate only on paths that are 7 characters long.
+crawler = Crawler('.', filter=lambda path: len(str(path)) == 7)  # Iterate only on paths that are 7 characters long.
 ```
 
 
@@ -111,7 +111,7 @@ crawler = Crawler('.', filter = lambda path: len(str(path)) == 7)  # Iterate onl
 
 You can set an arbitrary condition under which file traversal will stop using [cancellation tokens](https://cantok.readthedocs.io/en/latest/the_pattern/) from the [`cantok`](https://github.com/pomponchik/cantok) library.
 
-> There are 2 ways to do this ↓
+> There are two ways to do this ↓
 
 1. If you use the crawler as a one-time object for a single iteration, set the token when creating it:
 
@@ -120,7 +120,7 @@ for path in Crawler('.', token=TimeoutToken(0.0001)): # Limit the iteration time
     print(path)
 ```
 
-2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it everytime:
+2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it every time:
 
   ```python
 crawler = Crawler('.')
@@ -141,7 +141,7 @@ for path in Crawler('../dirstree') + Crawler('../cantok'):
     print(path)
 ```
 
-> ↑ The paths that you will iterate on will be automatically deduplicated.
+> ↑ The paths that you will iterate over will be automatically deduplicated.
 
 > ↑ You can also impose arbitrary restrictions on each of the summed objects, all of them will be taken into account.
 

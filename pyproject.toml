@@ -4,13 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dirstree"
-version = "0.0.4"
+version = "0.0.5"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Another library for iterating through the contents of a directory'
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ['pathspec==0.12.1', 'printo>=0.0.10', 'cantok==0.0.32', 'sigmatch>=0.0.6']
-
+dependencies = [
+    'printo>=0.0.22',
+    'cantok==0.0.32',
+    'sigmatch>=0.0.8',
+    'pathspec==0.12.1',
+]
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -25,6 +29,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3.15',
     'Programming Language :: Python :: Free Threading',
     'Programming Language :: Python :: Free Threading :: 3 - Stable',
     'License :: OSI Approved :: MIT License',
@@ -49,5 +54,5 @@ lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "
 format.quote-style = "single"
 
 [project.urls]
-'Source' = 'https://github.com/pomponchik/dirstree'
-'Tracker' = 'https://github.com/pomponchik/dirstree/issues'
+'Source' = 'https://github.com/mutating/dirstree'
+'Tracker' = 'https://github.com/mutating/dirstree/issues'

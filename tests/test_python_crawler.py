@@ -74,7 +74,7 @@ def test_crawl_test_directory_with_exclude_inits(
         (PythonCrawler('usr/bin'), "PythonCrawler('usr/bin')"),
         (PythonCrawler('.', exclude=['*.py']), "PythonCrawler('.', exclude=['*.py'])"),
         (PythonCrawler('.', filter=custom_filter), "PythonCrawler('.', filter=custom_filter)"),
-        (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=λ)"),  # noqa: ARG005
+        (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=lambda x: True)"),  # noqa: ARG005
         (PythonCrawler('.', token=ConditionToken(lambda: True)), "PythonCrawler('.', token=ConditionToken(λ))"),
         (PythonCrawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([PythonCrawler('../dirstree'), PythonCrawler('../cantok')])"),
     ],
