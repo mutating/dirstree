@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Generator, List
 
 from cantok import AbstractToken, DefaultToken
-from printo import descript_data_object
+from printo import describe_data_object
 
 from dirstree.crawlers.abstract import AbstractCrawler
 
@@ -12,7 +12,7 @@ class CrawlersGroup(AbstractCrawler):
         self.crawlers = crawlers
 
     def __repr__(self) -> str:
-        return descript_data_object(
+        return describe_data_object(
             type(self).__name__,
             (self.crawlers,),
             {},
