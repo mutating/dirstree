@@ -53,5 +53,5 @@ lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "
 format.quote-style = "single"
 
 [project.urls]
-'Source' = 'https://github.com/pomponchik/dirstree'
-'Tracker' = 'https://github.com/pomponchik/dirstree/issues'
+'Source' = 'https://github.com/mutating/dirstree'
+'Tracker' = 'https://github.com/mutating/dirstree/issues'

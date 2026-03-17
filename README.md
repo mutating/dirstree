@@ -3,19 +3,19 @@
 
 [![Downloads](https://static.pepy.tech/badge/dirstree/month)](https://pepy.tech/project/dirstree)
 [![Downloads](https://static.pepy.tech/badge/dirstree)](https://pepy.tech/project/dirstree)
-[![Coverage Status](https://coveralls.io/repos/github/pomponchik/dirstree/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/dirstree?branch=main)
-[![Lines of code](https://sloc.xyz/github/pomponchik/dirstree/?category=code)](https://github.com/boyter/scc/)
-[![Hits-of-Code](https://hitsofcode.com/github/pomponchik/dirstree?branch=main)](https://hitsofcode.com/github/pomponchik/dirstree/view?branch=main)
-[![Test-Package](https://github.com/pomponchik/dirstree/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/dirstree/actions/workflows/tests_and_coverage.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mutating/dirstree/badge.svg?branch=main)](https://coveralls.io/github/mutating/dirstree?branch=main)
+[![Lines of code](https://sloc.xyz/github/mutating/dirstree/?category=code)](https://github.com/boyter/scc/)
+[![Hits-of-Code](https://hitsofcode.com/github/mutating/dirstree?branch=main)](https://hitsofcode.com/github/mutating/dirstree/view?branch=main)
+[![Test-Package](https://github.com/mutating/dirstree/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/mutating/dirstree/actions/workflows/tests_and_coverage.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/dirstree.svg)](https://pypi.python.org/pypi/dirstree)
 [![PyPI version](https://badge.fury.io/py/dirstree.svg)](https://badge.fury.io/py/dirstree)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pomponchik/dirstree)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mutating/dirstree)
 
 </details>
 
-![logo](https://raw.githubusercontent.com/pomponchik/dirstree/develop/docs/assets/logo_1.svg)
+![logo](https://raw.githubusercontent.com/mutating/dirstree/develop/docs/assets/logo_1.svg)
 
 
 There are many libraries for traversing directories. You can also do this using the standard library. This particular library is a bit different in that:
