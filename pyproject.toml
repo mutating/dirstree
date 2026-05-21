@@ -11,7 +11,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     'printo>=0.0.27',
-    'cantok==0.0.36',
+    'cantok>=0.0.36',
     'sigmatch>=0.0.10',
     'pathspec==0.12.1',
 ]
