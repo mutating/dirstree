@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dirstree"
-version = "0.0.5"
+version = "0.0.6"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Another library for iterating through the contents of a directory'
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    'printo>=0.0.22',
-    'cantok==0.0.32',
-    'sigmatch>=0.0.8',
+    'printo>=0.0.27',
+    'cantok>=0.0.36',
+    'sigmatch>=0.0.10',
     'pathspec==0.12.1',
 ]
 classifiers = [
@@ -35,6 +35,7 @@ classifiers = [
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
+    'Typing :: Typed',
 ]
 keywords = ['files iteration']
 
