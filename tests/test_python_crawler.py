@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
-from cantok import ConditionToken
+from cantok import ConditionToken, SimpleToken
 from full_match import match
 from sigmatch.errors import SignatureMismatchError
 
@@ -102,3 +102,30 @@ def test_crawl_without_path():
 def test_check_filter_signature():
     with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
         PythonCrawler(filter=lambda: None)
+
+
+def test_python_apply_only_visits_py_files(crawl_directory_path: Union[str, Path]):
+    seen: list = []
+    PythonCrawler(crawl_directory_path).apply(seen.append)
+    assert seen
+    assert all(p.suffix == '.py' for p in seen)
+    assert seen == list(PythonCrawler(crawl_directory_path))
+
+
+def test_python_apply_respects_exclude(crawl_directory_path: Union[str, Path]):
+    seen: list = []
+    PythonCrawler(crawl_directory_path, exclude=['__init__.py']).apply(seen.append)
+    assert seen == list(PythonCrawler(crawl_directory_path, exclude=['__init__.py']))
+
+
+def test_python_apply_respects_custom_filter(crawl_directory_path: Union[str, Path]):
+    seen: list = []
+    PythonCrawler(crawl_directory_path, filter=lambda x: 'simple' in x.name).apply(seen.append)
+    assert seen
+    assert all('simple' in p.name for p in seen)
+
+
+def test_python_apply_with_cancelled_token(crawl_directory_path: Union[str, Path]):
+    seen: list = []
+    PythonCrawler(crawl_directory_path, token=SimpleToken(cancelled=True)).apply(seen.append)
+    assert seen == []

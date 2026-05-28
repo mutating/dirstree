@@ -23,6 +23,10 @@ class Crawler(AbstractCrawler):
     >>> for file in crawler:
     >>>     print(file)
 
+    Or, if you just want to run a function on each path the crawler would yield, use apply():
+
+    >>> Crawler('path/to/directory', extensions=['.py']).apply(print)
+
     Only the first argument with the directory path is required, the rest are optional.
     """
 

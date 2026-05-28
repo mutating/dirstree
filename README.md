@@ -30,6 +30,7 @@ There are many libraries for traversing directories. You can also do this using 
 
 - [**Installation**](#installation)
 - [**Basic usage**](#basic-usage)
+- [**Applying a Function to Each Path**](#applying-a-function-to-each-path)
 - [**Filtering**](#filtering)
 - [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
 - [**Combination**](#combination)
@@ -65,6 +66,19 @@ for file in crawler:
 ```
 
 > ↑ This recursively prints all files in the current directory, including files in nested directories. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
+
+
+## Applying a Function to Each Path
+
+If you just want to run a function for each file the crawler finds, you don't have to write the loop yourself — every crawler has an `apply()` method:
+
+```python
+from dirstree import PythonCrawler
+
+PythonCrawler('src', exclude=['tests/**']).apply(my_linter)
+```
+
+All of the crawler's settings — extensions, excludes, custom filters, and cancellation tokens — are respected, exactly as they would be during normal iteration. You can also pass a fresh cancellation token to `apply()` itself, the same way you would to `go()`.
 
 
 ## Filtering
