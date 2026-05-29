@@ -137,14 +137,14 @@ You can set an arbitrary condition under which file traversal will stop using [c
 
 1. If you use the crawler as a one-time object for a single iteration, set the token when creating it:
 
-  ```python
+```python
 for path in Crawler('.', token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
     print(path)
 ```
 
 2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it every time:
 
-  ```python
+```python
 crawler = Crawler('.')
 
 for path in crawler.go(token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
