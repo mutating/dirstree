@@ -4,7 +4,7 @@ import stat
 from functools import partial
 from inspect import Parameter, signature
 from pathlib import Path
-from typing import Type, Union
+from typing import List, Type, Union
 
 import pytest
 from cantok import ConditionToken, DefaultToken, SimpleToken
@@ -293,7 +293,7 @@ def test_apply_with_only_files_false_matches_iteration_order(all_entities_direct
     The test records callback inputs and compares them to a normal
     `only_files=False` traversal.
     """
-    seen: list[Path] = []
+    seen: List[Path] = []
 
     Crawler(all_entities_directory_path, only_files=False).apply(seen.append)
 
@@ -307,7 +307,7 @@ def test_apply_with_only_files_false_passes_directories_to_callback(all_entities
     The test collects callback inputs and checks that at least one yielded path
     is a directory.
     """
-    seen: list[Path] = []
+    seen: List[Path] = []
 
     Crawler(all_entities_directory_path, only_files=False).apply(seen.append)
 
