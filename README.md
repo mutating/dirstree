@@ -30,7 +30,7 @@ There are many libraries for traversing directories. You can also do this using 
 
 - [**Installation**](#installation)
 - [**Basic usage**](#basic-usage)
-- [**Applying a Function to Each Path**](#applying-a-function-to-each-path)
+- [**Applying a function to each path**](#applying-a-function-to-each-path)
 - [**Filtering**](#filtering)
 - [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
 - [**Combination**](#combination)
@@ -74,7 +74,7 @@ crawler = Crawler('.', only_files=False)
 ```
 
 
-## Applying a Function to Each Path
+## Applying a function to each path
 
 If you just want to run a function for each file the crawler finds, you don't have to write the loop yourself — every crawler has an `apply()` method:
 
