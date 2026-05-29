@@ -67,6 +67,12 @@ for file in crawler:
 
 > ↑ This recursively prints all files in the current directory, including files in nested directories. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
 
+By default, crawlers iterate over files only. If you need every filesystem entity found under the base directory, pass `only_files=False`:
+
+```python
+crawler = Crawler('.', only_files=False)
+```
+
 
 ## Applying a Function to Each Path
 
@@ -97,6 +103,8 @@ To set the file extensions you are interested in, use the `extensions` parameter
 ```python
 crawler = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
+
+> ⓘ The `extensions` parameter is available only in the default file-only mode, so it cannot be combined with `only_files=False`. `PythonCrawler` is always file-only.
 
 Also, if you only need Python files, you can use a special class to bypass them only, without specifying extensions:
 
