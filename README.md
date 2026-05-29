@@ -105,7 +105,7 @@ To set the file extensions you are interested in, use the `extensions` parameter
 crawler = Crawler('.', extensions=['.txt'])  # Iterate only on .txt files.
 ```
 
-> ⓘ The `extensions` parameter is available only in the default file-only mode, so it cannot be combined with `only_files=False`. `PythonCrawler` is always file-only.
+> ⓘ The `extensions` parameter is available only in the default file-only mode, so it cannot be combined with `only_files=False`.
 
 Also, if you only need Python files, you can use a special class to bypass them only, without specifying extensions:
 
@@ -114,6 +114,8 @@ from dirstree import PythonCrawler
 
 crawler = PythonCrawler('.')  # Iterate only on .py files.
 ```
+
+> ⓘ `PythonCrawler` is always file-only.
 
 To specify which files and directories you do NOT want to iterate over, use the `exclude` parameter:
 
