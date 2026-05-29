@@ -20,6 +20,7 @@
 
 There are many libraries for traversing directories. You can also do this using the standard library. What makes this library different:
 
+- 💎 Beautiful, laconic syntax.
 - ⚗️ Filtering by file extensions, text patterns in [`.gitignore` format](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository#_ignoring), and using custom callables.
 - 🐍 Natively works with both [`Path` objects](https://docs.python.org/3/library/pathlib.html#basic-use) from the standard library and strings.
 - ❌ Support for [cancellation tokens](https://github.com/pomponchik/cantok).
@@ -30,7 +31,7 @@ There are many libraries for traversing directories. You can also do this using 
 
 - [**Installation**](#installation)
 - [**Basic usage**](#basic-usage)
-- [**Applying a Function to Each Path**](#applying-a-function-to-each-path)
+- [**Applying a function to each path**](#applying-a-function-to-each-path)
 - [**Filtering**](#filtering)
 - [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
 - [**Combination**](#combination)
@@ -74,17 +75,17 @@ crawler = Crawler('.', only_files=False)
 ```
 
 
-## Applying a Function to Each Path
+## Applying a function to each path
 
 If you just want to run a function for each file the crawler finds, you don't have to write the loop yourself — every crawler has an `apply()` method:
 
 ```python
-from dirstree import PythonCrawler
-
-PythonCrawler('src', exclude=['tests/**']).apply(my_linter)
+Crawler('src', exclude=['tests/**']).apply(print)
 ```
 
-All of the crawler's settings — extensions, excludes, custom filters, and cancellation tokens — are respected, exactly as they would be during normal iteration. You can also pass a fresh cancellation token to `apply()` itself, the same way you would to `go()`.
+> ↑ This will print the entire contents of the directory, except for the excluded locations.
+
+> ⓘ All of the crawler's settings are respected, exactly as they would be during normal iteration.
 
 
 ## Filtering
@@ -137,14 +138,14 @@ You can set an arbitrary condition under which file traversal will stop using [c
 
 1. If you use the crawler as a one-time object for a single iteration, set the token when creating it:
 
-  ```python
+```python
 for path in Crawler('.', token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
     print(path)
 ```
 
 2. If you plan to use the crawler object several times, use the `go()` method for iteration and pass a new token to it every time:
 
-  ```python
+```python
 crawler = Crawler('.')
 
 for path in crawler.go(token=TimeoutToken(0.0001)): # Limit the iteration time to 0.0001 seconds.
