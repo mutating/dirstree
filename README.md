@@ -79,8 +79,6 @@ crawler = Crawler('.', only_files=False)
 If you just want to run a function for each file the crawler finds, you don't have to write the loop yourself — every crawler has an `apply()` method:
 
 ```python
-from dirstree import Crawler
-
 # This will print the entire contents of the directory, except for the excluded locations.
 Crawler('src', exclude=['tests/**']).apply(print)
 ```
