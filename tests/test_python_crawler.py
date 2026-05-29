@@ -66,7 +66,7 @@ def test_cant_pass_extensions():
     constructor-level `TypeError`, because the subclass does not expose that
     parameter.
     """
-    if sys.version_info < (3, 9):
+    if sys.version_info < (3, 10):
         expected_message = "__init__() got an unexpected keyword argument 'extensions'"
     else:
         expected_message = "PythonCrawler.__init__() got an unexpected keyword argument 'extensions'"
@@ -82,7 +82,7 @@ def test_python_crawler_rejects_only_files(crawl_directory_path: Union[str, Path
     The test passes `only_files=False` and verifies that the constructor raises
     `TypeError` because the subclass does not expose that parameter.
     """
-    if sys.version_info < (3, 9):
+    if sys.version_info < (3, 10):
         expected_message = "__init__() got an unexpected keyword argument 'only_files'"
     else:
         expected_message = "PythonCrawler.__init__() got an unexpected keyword argument 'only_files'"
