@@ -68,12 +68,6 @@ for file in crawler:
 
 > ↑ This recursively prints all files in the current directory, including files in nested directories. At each iteration, we get a new [`Path` object](https://docs.python.org/3/library/pathlib.html#basic-use).
 
-By default, crawlers iterate over files only. If you need every filesystem entity found under the base directory, pass `only_files=False`:
-
-```python
-crawler = Crawler('.', only_files=False)
-```
-
 
 ## Applying a function to each path
 
@@ -89,6 +83,12 @@ Crawler('src', exclude=['tests/**']).apply(print)
 
 
 ## Filtering
+
+By default, crawlers iterate over files only. If you need every filesystem entity found under the base directory, pass `only_files=False`:
+
+```python
+crawler = Crawler('.', only_files=False)
+```
 
 Iterating through the files in the directory, you may not want to view all files, but only files of a certain type. To do this, ignore all other files. How to do it? There are three ways:
 
