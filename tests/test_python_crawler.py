@@ -77,7 +77,7 @@ def test_python_crawler_rejects_only_files(crawl_directory_path: Union[str, Path
     `TypeError` because the subclass does not expose that parameter.
     """
     with pytest.raises(TypeError, match=match("PythonCrawler.__init__() got an unexpected keyword argument 'only_files'")):
-        PythonCrawler(crawl_directory_path, only_files=False)
+        PythonCrawler(crawl_directory_path, only_files=False)  # type: ignore[call-arg]
 
 
 def test_crawl_test_directory_with_exclude_inits(
