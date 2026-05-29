@@ -7,6 +7,7 @@ from printo import describe_data_object, not_none
 from sigmatch import PossibleCallMatcher
 
 from dirstree.crawlers.abstract import AbstractCrawler
+from dirstree.errors import IncompatibleCrawlerOptionsError
 
 
 # TODO: add typing tests
@@ -37,7 +38,14 @@ class Crawler(AbstractCrawler):
         exclude: Optional[List[str]] = None,
         filter: Optional[Callable[[Path], bool]] = None,  # noqa: A002
         token: AbstractToken = DefaultToken(),  # noqa: B008
+        only_files: bool = True,
     ) -> None:
+        if extensions is not None and not only_files:
+            raise IncompatibleCrawlerOptionsError(
+                'The "extensions" and "only_files=False" options are incompatible: '
+                'extensions can be applied only when the crawler yields files, '
+                'because non-file filesystem entities do not have meaningful file extensions.',
+            )
         if extensions is not None:
             for extension in extensions:
                 if not extension.startswith('.'):
@@ -52,6 +60,7 @@ class Crawler(AbstractCrawler):
         self.exclude = exclude if exclude is not None else []
         self.filter = filter
         self.token = token
+        self.only_files = only_files
 
         self.addictional_repr_filters: Dict[str, Callable[[Any], bool]] = {}
 
@@ -61,6 +70,7 @@ class Crawler(AbstractCrawler):
             'exclude': lambda x: bool(x),
             'filter': not_none,
             'token': lambda x: not isinstance(x, DefaultToken),
+            'only_files': lambda x: x is False,
         }
         filters.update(self.addictional_repr_filters)
 
@@ -72,6 +82,7 @@ class Crawler(AbstractCrawler):
                 'exclude': self.exclude,
                 'filter': self.filter,
                 'token': self.token,
+                'only_files': self.only_files,
             },
             filters=filters,  # type: ignore[arg-type]
         )
@@ -86,8 +97,11 @@ class Crawler(AbstractCrawler):
             if token:
                 for child_path in base_path.rglob('*'):
                     if (
-                        child_path.is_file()
-                        and not excludes_spec.match_file(child_path)
+                        (not self.only_files or child_path.is_file())
+                        and not (
+                            excludes_spec.match_file(child_path)
+                            or (child_path.is_dir() and excludes_spec.match_file(f'{child_path}/'))
+                        )
                         and (self.extensions is None or child_path.suffix in self.extensions)
                         and (self.filter is None or self.filter(child_path))
                     ):
