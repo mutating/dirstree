@@ -1486,27 +1486,46 @@ def test_apply_on_nonexistent_base_path_matches_iteration_behavior(tmp_path: Pat
     """
     `apply()` should match iteration behavior for nonexistent base paths.
 
-    The test compares the exception type from iteration and `apply()`. If
-    iteration yields no error, it also verifies that no callback input appears.
+    The test records the normal iteration result for a missing path and verifies
+    that `apply()` visits exactly the same paths.
     """
     nonexistent = tmp_path / 'does_not_exist'
 
-    iter_error: type = type(None)
-    try:
-        list(Crawler(nonexistent))
-    except Exception as e:  # noqa: BLE001
-        iter_error = type(e)
-
+    iter_paths = list(Crawler(nonexistent))
     seen: list = []
-    apply_error: type = type(None)
-    try:
-        Crawler(nonexistent).apply(seen.append)
-    except Exception as e:  # noqa: BLE001
-        apply_error = type(e)
+    Crawler(nonexistent).apply(seen.append)
+    assert seen == iter_paths
 
-    assert apply_error == iter_error
-    if iter_error is type(None):
-        assert seen == []
+
+def test_apply_propagates_rglob_errors_with_only_files_false(tmp_path: Path):
+    """
+    `apply()` should propagate traversal errors from all-entity crawling.
+
+    The test creates an unreadable directory and first checks whether this
+    platform exposes that as a `PermissionError`. If it does, applying a
+    callback through the crawler must propagate the same error.
+    """
+    blocked = tmp_path / 'blocked'
+    blocked.mkdir()
+    (blocked / 'file.txt').write_text('content')
+    blocked.chmod(0)
+
+    try:
+        try:
+            list(tmp_path.rglob('*'))
+        except PermissionError:
+            pass
+        else:
+            pytest.skip('Path.rglob does not propagate permission errors on this platform.')
+
+        seen: list = []
+        with pytest.raises(
+            PermissionError,
+            match=match(str(PermissionError(errno.EACCES, os.strerror(errno.EACCES), str(blocked)))),
+        ):
+            Crawler(tmp_path, only_files=False).apply(seen.append)
+    finally:
+        blocked.chmod(stat.S_IRWXU)
 
 
 def test_apply_on_file_base_path_matches_iteration_behavior(tmp_path: Path):
