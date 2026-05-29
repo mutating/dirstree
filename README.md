@@ -81,7 +81,8 @@ If you just want to run a function for each file the crawler finds, you don't ha
 ```python
 from dirstree import PythonCrawler
 
-PythonCrawler('src', exclude=['tests/**']).apply(my_linter)
+# This will print the entire contents of the directory, except for the excluded locations.
+PythonCrawler('src', exclude=['tests/**']).apply(print)
 ```
 
 All of the crawler's settings — extensions, excludes, custom filters, and cancellation tokens — are respected, exactly as they would be during normal iteration. You can also pass a fresh cancellation token to `apply()` itself, the same way you would to `go()`.
