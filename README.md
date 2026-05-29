@@ -79,11 +79,12 @@ crawler = Crawler('.', only_files=False)
 If you just want to run a function for each file the crawler finds, you don't have to write the loop yourself — every crawler has an `apply()` method:
 
 ```python
-# This will print the entire contents of the directory, except for the excluded locations.
 Crawler('src', exclude=['tests/**']).apply(print)
 ```
 
-All of the crawler's settings — extensions, excludes, custom filters, and cancellation tokens — are respected, exactly as they would be during normal iteration. You can also pass a fresh cancellation token to `apply()` itself, the same way you would to `go()`.
+> ↑ This will print the entire contents of the directory, except for the excluded locations.
+
+> ⓘ All of the crawler's settings are respected, exactly as they would be during normal iteration.
 
 
 ## Filtering
