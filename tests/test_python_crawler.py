@@ -16,8 +16,16 @@ def custom_filter(path: Path) -> bool:  # noqa: ARG001
 
 
 def test_signature_of_python_crawler_is_signature_of_crawler_without_extensions():
+    """
+    `PythonCrawler` should not expose generic file-selection options.
+
+    The test compares constructor parameters with `Crawler` after removing
+    `extensions` and `only_files`, because PythonCrawler is always file-only and
+    fixed to Python files.
+    """
     crawler_parameters = list(signature(Crawler).parameters.keys())
     crawler_parameters.remove('extensions')
+    crawler_parameters.remove('only_files')
 
     assert crawler_parameters == list(signature(PythonCrawler).parameters.keys())
 
@@ -50,8 +58,26 @@ def test_python_crawler_is_same_as_crawler_with_python_extension(crawl_directory
 
 
 def test_cant_pass_extensions():
-    with pytest.raises(TypeError):
+    """
+    `PythonCrawler` should reject explicit extension configuration.
+
+    The test passes `extensions` as a keyword argument and verifies Python's
+    constructor-level `TypeError`, because the subclass does not expose that
+    parameter.
+    """
+    with pytest.raises(TypeError, match=match("PythonCrawler.__init__() got an unexpected keyword argument 'extensions'")):
         PythonCrawler('.', extensions=['.txt'])
+
+
+def test_python_crawler_rejects_only_files(crawl_directory_path: Union[str, Path]):
+    """
+    `PythonCrawler` should reject the all-entity crawler mode.
+
+    The test passes `only_files=False` and verifies that the constructor raises
+    `TypeError` because the subclass does not expose that parameter.
+    """
+    with pytest.raises(TypeError, match=match("PythonCrawler.__init__() got an unexpected keyword argument 'only_files'")):
+        PythonCrawler(crawl_directory_path, only_files=False)
 
 
 def test_crawl_test_directory_with_exclude_inits(
