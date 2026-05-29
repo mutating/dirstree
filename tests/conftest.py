@@ -12,3 +12,8 @@ def crawl_directory_path(request):
 @pytest.fixture(params=[str, Path])
 def second_crawl_directory_path(request):
     return request.param(os.path.join('tests', 'test_files', 'walk_it_2'))
+
+
+@pytest.fixture(params=[str, Path])
+def all_entities_directory_path(request):
+    return request.param(os.path.join('tests', 'test_files', 'all_entities'))
