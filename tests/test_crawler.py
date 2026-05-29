@@ -481,6 +481,12 @@ def test_rglob_errors_propagate_with_only_files_false(tmp_path: Path):
 def test_crawl_test_directory_with_default_extensions(
     crawl_directory_path: Union[str, Path],
 ):
+    """
+    The default crawler should return every file from the fixture tree.
+
+    The test compares sorted string paths with the full expected file list,
+    including files in the nested directory.
+    """
     crawler = Crawler(crawl_directory_path)
 
     expected_paths = [
@@ -505,6 +511,12 @@ def test_crawl_test_directory_with_default_extensions(
 def test_crawl_test_directory_with_txt_extension(
     crawl_directory_path: Union[str, Path],
 ):
+    """
+    Extension filtering should keep only matching files.
+
+    The test crawls the fixture with `extensions=['.txt']` and expects exactly
+    the single text file from the nested directory.
+    """
     crawler = Crawler(crawl_directory_path, extensions=['.txt'])
 
     assert [str(x) for x in crawler] == [
@@ -515,6 +527,12 @@ def test_crawl_test_directory_with_txt_extension(
 
 
 def test_crawl_test_directory_with_py_extension(crawl_directory_path: Union[str, Path]):
+    """
+    Python extension filtering should keep only `.py` files.
+
+    The test compares sorted paths from `extensions=['.py']` with the expected
+    Python files in the fixture tree.
+    """
     crawler = Crawler(crawl_directory_path, extensions=['.py'])
 
     expected_paths = [
@@ -536,6 +554,12 @@ def test_crawl_test_directory_with_py_extension(crawl_directory_path: Union[str,
 def test_crawl_test_directory_with_exclude_with_py_extension(
     crawl_directory_path: Union[str, Path],
 ):
+    """
+    Exclude patterns and extension filtering should compose.
+
+    The test keeps Python files while excluding `__init__.py`, leaving only the
+    non-init Python files from the fixture.
+    """
     crawler = Crawler(crawl_directory_path, exclude=['__init__.py'], extensions=['.py'])
 
     assert [str(x) for x in crawler] == [
@@ -549,6 +573,12 @@ def test_crawl_test_directory_with_exclude_with_py_extension(
 def test_crawl_test_directory_with_exclude_patterns_without_extensions(
     crawl_directory_path: Union[str, Path],
 ):
+    """
+    Exclude patterns should apply when no extension filter is configured.
+
+    The test excludes `__init__.py` and verifies that all other fixture files
+    remain in the result.
+    """
     crawler = Crawler(crawl_directory_path, exclude=['__init__.py'])
 
     expected_paths = [
@@ -571,6 +601,12 @@ def test_crawl_test_directory_with_exclude_patterns_without_extensions(
 def test_crawl_test_directory_with_exclude_patterns_and_extensions(
     crawl_directory_path: Union[str, Path],
 ):
+    """
+    Exclude patterns should compose with non-Python extension filtering.
+
+    The test combines `extensions=['.txt']` with an unrelated init-file exclude
+    and verifies that the text file is still yielded.
+    """
     crawler = Crawler(
         crawl_directory_path, extensions=['.txt'], exclude=['__init__.py'],
     )
@@ -598,6 +634,12 @@ def test_crawl_test_directory_with_exclude_patterns_and_extensions(
     ],
 )
 def test_repr(crawler: Crawler, expected_repr: str):
+    """
+    Crawler and group representations should include configured options.
+
+    The parametrized cases cover plain crawlers, filters, tokens, excludes,
+    extensions, and mixed crawler groups by checking exact `repr()` output.
+    """
     assert repr(crawler) == expected_repr
 
 
@@ -609,6 +651,12 @@ def test_repr(crawler: Crawler, expected_repr: str):
     ],
 )
 def test_iter(factory: Type[Crawler]):
+    """
+    Iterating a crawler should delegate to `go()`.
+
+    The test runs both crawler classes and compares `list(crawler)` with
+    `list(crawler.go())`.
+    """
     crawler = factory('.')
 
     assert list(crawler) == list(crawler.go())
@@ -622,6 +670,12 @@ def test_iter(factory: Type[Crawler]):
     ],
 )
 def test_crawl_repeat(factory: Type[Crawler]):
+    """
+    Crawlers should be reusable across repeated iterations.
+
+    The test materializes the same crawler twice and verifies that both
+    iterations produce identical results.
+    """
     crawler = factory('.')
 
     assert list(crawler) == list(crawler)
@@ -664,6 +718,12 @@ def test_filter_skips_first_path(factory: Type[Crawler]):
     ],
 )
 def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    Filters should receive the same `Path` objects that traversal yields.
+
+    The test records every filter argument and compares that collector with the
+    crawler's yielded result for both crawler classes.
+    """
     collector = []
 
     def empty_filter(path):
@@ -724,6 +784,12 @@ def test_cancel_after_n_iterations(crawl_directory_path: Union[str, Path], n: in
     ],
 )
 def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    An already-cancelled token should suppress traversal.
+
+    The test passes a cancelled token to both crawler classes and expects an
+    empty result.
+    """
     assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True))) == []
 
 
@@ -735,6 +801,12 @@ def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[C
     ],
 )
 def test_default_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    An explicit default token should behave like the implicit default.
+
+    The test compares traversal with `DefaultToken()` to normal traversal for
+    both crawler classes.
+    """
     assert list(factory(crawl_directory_path, token=DefaultToken())) == list(
         factory(crawl_directory_path),
     )
@@ -757,14 +829,32 @@ def test_extension_without_leading_dot_raises_error(crawl_directory_path: Union[
 
 
 def test_deduplication_with_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
+    """
+    A group made from duplicate crawlers should deduplicate paths.
+
+    The test adds two equivalent crawlers and compares the group result with a
+    single crawler traversal.
+    """
     assert list(Crawler(crawl_directory_path) + Crawler(crawl_directory_path)) == list(Crawler(crawl_directory_path))
 
 
 def test_deduplication_with_sum_of_crawlers_and_group(crawl_directory_path: Union[str, Path]):
+    """
+    Deduplication should also work through nested crawler groups.
+
+    The test nests a duplicate group inside another addition and expects the
+    same result as a single crawler.
+    """
     assert list(Crawler(crawl_directory_path) + (Crawler(crawl_directory_path) + Crawler(crawl_directory_path))) == list(Crawler(crawl_directory_path))
 
 
 def test_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
+    """
+    Adding crawlers with complementary extension filters should cover all files.
+
+    The test combines `.py` and `.txt` crawlers and compares the sorted group
+    result with the default crawler over the same fixture.
+    """
     first_crawler = Crawler(crawl_directory_path, extensions=['.py'])
     second_crawler = Crawler(crawl_directory_path, extensions=['.txt'])
 
@@ -780,6 +870,12 @@ def test_sum_of_crawlers(crawl_directory_path: Union[str, Path]):
 
 
 def test_sum_usual_crawler_and_python_crawler():
+    """
+    Mixed filters should combine to the same result as an unrestricted crawler.
+
+    The test adds a Python-file crawler to a crawler filtering out Python files,
+    then compares the sorted result with the default current-directory crawl.
+    """
     first_crawler = Crawler('.', extensions=['.py'])
     second_crawler = Crawler('.', filter = lambda x: x.suffix != '.py')
 
@@ -807,25 +903,54 @@ def test_addition_with_non_crawler_raises_type_error():
 
 
 def test_crawl_two_folders(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
+    """
+    A multipath crawler should traverse base paths in argument order.
+
+    The test compares one crawler with two base paths to the concatenation of
+    two single-path crawler results.
+    """
     assert list(Crawler(crawl_directory_path, second_crawl_directory_path)) == list(Crawler(crawl_directory_path)) + list(Crawler(second_crawl_directory_path))
 
 
 def test_crawl_without_path():
+    """
+    A crawler without base paths should yield nothing.
+
+    The test constructs `Crawler()` and expects an empty list.
+    """
     assert list(Crawler()) == []
 
 
 def test_check_filter_signature():
+    """
+    Filter callables should accept exactly the expected path argument.
+
+    The test passes a zero-argument callable and verifies the signature
+    validation error.
+    """
     with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
         Crawler(filter=lambda: None)
 
 
 def test_apply_calls_function_once_per_file(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should call the callback once for every yielded file.
+
+    The test counts callback inputs and compares that count with normal
+    iteration length.
+    """
     seen: list = []
     Crawler(crawl_directory_path).apply(seen.append)
     assert len(seen) == len(list(Crawler(crawl_directory_path)))
 
 
 def test_apply_passes_path_instance(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should pass `Path` objects to callbacks.
+
+    The test records `isinstance(path, Path)` for every callback input and
+    requires all callback arguments to be paths.
+    """
     types_seen: list = []
     Crawler(crawl_directory_path).apply(lambda p: types_seen.append(isinstance(p, Path)))
     assert types_seen
@@ -833,22 +958,46 @@ def test_apply_passes_path_instance(crawl_directory_path: Union[str, Path]):
 
 
 def test_apply_set_matches_iteration_set(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should visit the same path set as iteration.
+
+    The test collects callback inputs and compares their set with the crawler's
+    iteration set.
+    """
     seen: list = []
     Crawler(crawl_directory_path).apply(seen.append)
     assert set(seen) == set(Crawler(crawl_directory_path))
 
 
 def test_apply_order_matches_iteration(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should preserve iteration order.
+
+    The test records callback inputs and compares the list directly with normal
+    crawler iteration.
+    """
     seen: list = []
     Crawler(crawl_directory_path).apply(seen.append)
     assert seen == list(Crawler(crawl_directory_path))
 
 
 def test_apply_returns_none(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should be a side-effect API that returns `None`.
+
+    The test calls `apply()` with a callback that returns its input and verifies
+    that `apply()` itself still returns `None`.
+    """
     assert Crawler(crawl_directory_path).apply(lambda x: x) is None  # type: ignore[func-returns-value]
 
 
 def test_apply_multiple_invocations_independent(crawl_directory_path: Union[str, Path]):
+    """
+    Multiple `apply()` calls on one crawler should be independent.
+
+    The test runs `apply()` twice, records both callback sequences, and compares
+    them with each other and with normal iteration.
+    """
     crawler = Crawler(crawl_directory_path)
     first: list = []
     second: list = []
@@ -859,12 +1008,24 @@ def test_apply_multiple_invocations_independent(crawl_directory_path: Union[str,
 
 
 def test_apply_on_empty_directory(tmp_path: Path):
+    """
+    `apply()` should not call the callback for an empty directory.
+
+    The test crawls an empty temporary directory and verifies that the collector
+    remains empty.
+    """
     seen: list = []
     Crawler(tmp_path).apply(seen.append)
     assert seen == []
 
 
 def test_apply_respects_extensions(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should respect extension filters.
+
+    The test applies a `.py` filter, records callback inputs, and verifies that
+    every visited path has a Python suffix.
+    """
     seen: list = []
     Crawler(crawl_directory_path, extensions=['.py']).apply(seen.append)
     assert seen
@@ -872,6 +1033,12 @@ def test_apply_respects_extensions(crawl_directory_path: Union[str, Path]):
 
 
 def test_apply_respects_exclude(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should respect exclude patterns.
+
+    The test excludes `__init__.py`, records callback inputs, and verifies that
+    none of the visited paths have that file name.
+    """
     seen: list = []
     Crawler(crawl_directory_path, exclude=['__init__.py']).apply(seen.append)
     assert seen
@@ -879,6 +1046,12 @@ def test_apply_respects_exclude(crawl_directory_path: Union[str, Path]):
 
 
 def test_apply_respects_custom_filter(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should respect the custom filter callable.
+
+    The test keeps only Python files via `filter`, records callback inputs, and
+    verifies that every visited path matches that predicate.
+    """
     seen: list = []
     Crawler(crawl_directory_path, filter=lambda x: x.suffix == '.py').apply(seen.append)
     assert seen
@@ -886,6 +1059,12 @@ def test_apply_respects_custom_filter(crawl_directory_path: Union[str, Path]):
 
 
 def test_apply_respects_all_filters_combined(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should use the same combined filtering rules as iteration.
+
+    The test combines extensions, excludes, and a custom filter, then compares
+    callback inputs with normal iteration for the same crawler options.
+    """
     seen: list = []
     kwargs = dict(
         extensions=['.py'],
@@ -897,12 +1076,24 @@ def test_apply_respects_all_filters_combined(crawl_directory_path: Union[str, Pa
 
 
 def test_apply_with_cancelled_call_time_token_skips_callback(crawl_directory_path: Union[str, Path]):
+    """
+    A cancelled call-level token should suppress `apply()` callbacks.
+
+    The test passes an already-cancelled token to `apply()` and verifies that no
+    path reaches the callback.
+    """
     seen: list = []
     Crawler(crawl_directory_path).apply(seen.append, token=SimpleToken(cancelled=True))
     assert seen == []
 
 
 def test_apply_with_cancelled_instance_token_skips_callback(crawl_directory_path: Union[str, Path]):
+    """
+    A cancelled instance token should suppress `apply()` callbacks.
+
+    The test creates a crawler with an already-cancelled token and verifies that
+    `apply()` never calls the callback.
+    """
     seen: list = []
     Crawler(crawl_directory_path, token=SimpleToken(cancelled=True)).apply(seen.append)
     assert seen == []
@@ -910,6 +1101,12 @@ def test_apply_with_cancelled_instance_token_skips_callback(crawl_directory_path
 
 @pytest.mark.parametrize('n', [0, 1, 2, 3])
 def test_apply_with_condition_token_cancels_after_n(crawl_directory_path: Union[str, Path], n: int):
+    """
+    A condition token passed to `apply()` should stop after the expected prefix.
+
+    The callback increments a counter, the token cancels when it reaches `n`,
+    and the visited paths are compared with the first `n` iteration results.
+    """
     seen: list = []
     index = 0
 
@@ -938,6 +1135,12 @@ def test_apply_combines_instance_and_call_tokens(
     instance_cancelled: bool,
     apply_cancelled: bool,
 ):
+    """
+    `apply()` should require both instance and call tokens to allow traversal.
+
+    The parametrized cases cover every combination where at least one token is
+    already cancelled, and all of them should skip callbacks.
+    """
     seen: list = []
     crawler = Crawler(crawl_directory_path, token=SimpleToken(cancelled=instance_cancelled))
     crawler.apply(seen.append, token=SimpleToken(cancelled=apply_cancelled))
@@ -979,11 +1182,32 @@ def test_apply_token_check_granularity_is_between_yields(crawl_directory_path: U
 
 
 def test_apply_with_zero_arg_callable_raises(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should reject callbacks without a path argument.
+
+    The test gives the crawler a filter with a side effect, passes a
+    zero-argument callback to `apply()`, and verifies both the signature
+    validation error and that traversal never reached the filter.
+    """
+    filter_calls: list = []
+
+    def collect_filter(path: Path) -> bool:
+        filter_calls.append(path)
+        return True
+
     with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
-        Crawler(crawl_directory_path).apply(lambda: None)  # type: ignore[misc, arg-type]
+        Crawler(crawl_directory_path, filter=collect_filter).apply(lambda: None)  # type: ignore[misc, arg-type]
+
+    assert filter_calls == []
 
 
 def test_apply_with_two_arg_callable_raises(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should reject callbacks requiring too many positional arguments.
+
+    The test passes a two-argument callable and checks the exact signature
+    validation message.
+    """
     with pytest.raises(
         SignatureMismatchError,
         match=match(
@@ -994,6 +1218,12 @@ def test_apply_with_two_arg_callable_raises(crawl_directory_path: Union[str, Pat
 
 
 def test_apply_with_def_function_works(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should accept a normal one-argument function.
+
+    The test records every path received by a nested function callback and
+    compares it with normal iteration.
+    """
     seen: list = []
 
     def callback(path: Path) -> None:
@@ -1003,18 +1233,25 @@ def test_apply_with_def_function_works(crawl_directory_path: Union[str, Path]):
     assert seen == list(Crawler(crawl_directory_path))
 
 
-def test_apply_validation_raises_before_iteration(crawl_directory_path: Union[str, Path]):
-    with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
-        Crawler(crawl_directory_path).apply(lambda: None)  # type: ignore[misc, arg-type]
-
-
 def test_apply_validation_runs_at_apply_not_construction(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should validate the callback when it is called.
+
+    The test constructs a crawler successfully, then passes an invalid callback
+    to `apply()` and expects the signature error there.
+    """
     crawler = Crawler(crawl_directory_path)
     with pytest.raises(SignatureMismatchError, match=match('The signature of the callable object does not match the expected one.')):
         crawler.apply(lambda: None)  # type: ignore[misc, arg-type]
 
 
 def test_apply_with_callable_class_instance(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should accept callable objects.
+
+    The test uses an instance with `__call__`, records its `seen` paths, and
+    compares them with normal iteration.
+    """
     class Recorder:
         def __init__(self) -> None:
             self.seen: list = []
@@ -1028,6 +1265,12 @@ def test_apply_with_callable_class_instance(crawl_directory_path: Union[str, Pat
 
 
 def test_apply_with_functools_partial(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should accept partially-applied callables.
+
+    The test binds a prefix argument with `functools.partial` and verifies that
+    each callback call receives the expected path as the remaining argument.
+    """
     seen: list = []
 
     def cb(prefix: str, path: Path) -> None:
@@ -1039,6 +1282,12 @@ def test_apply_with_functools_partial(crawl_directory_path: Union[str, Path]):
 
 
 def test_apply_with_bound_method(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should accept bound methods.
+
+    The test passes an instance method as the callback and verifies that the
+    instance records the same paths as normal iteration.
+    """
     class Collector:
         def __init__(self) -> None:
             self.seen: list = []
@@ -1070,6 +1319,12 @@ def test_apply_with_generator_function_is_silent_noop(crawl_directory_path: Unio
 
 
 def test_apply_propagates_exception(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should propagate exceptions raised by the callback.
+
+    The test uses a callback that always raises `ValueError` and checks the
+    exact propagated message.
+    """
     def boom(path: Path) -> None:  # noqa: ARG001
         raise ValueError('boom')
 
@@ -1098,6 +1353,12 @@ def test_apply_stops_iteration_on_first_exception(crawl_directory_path: Union[st
 
 
 def test_apply_preserves_custom_exception_type(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should preserve custom exception types from callbacks.
+
+    The test raises a local exception class from the callback and verifies that
+    the same type and message escape.
+    """
     class MyError(Exception):
         pass
 
@@ -1199,11 +1460,23 @@ def test_apply_with_multipath_crawler_no_dedup(crawl_directory_path: Union[str, 
 
 
 def test_apply_with_none_raises_valueerror(crawl_directory_path: Union[str, Path]):
+    """
+    `apply()` should reject non-callable callback objects.
+
+    The test passes `None` and verifies the exact `ValueError` raised by
+    signature detection.
+    """
     with pytest.raises(ValueError, match=match('It is impossible to determine the signature of an object that is not being callable.')):
         Crawler(crawl_directory_path).apply(None)  # type: ignore[arg-type]
 
 
 def test_apply_on_zero_path_crawler_never_calls_callback():
+    """
+    `apply()` on a zero-path crawler should be a no-op.
+
+    The test applies a collector callback to `Crawler()` and verifies that no
+    callback input is recorded.
+    """
     seen: list = []
     Crawler().apply(seen.append)
     assert seen == []
@@ -1237,6 +1510,12 @@ def test_apply_on_nonexistent_base_path_matches_iteration_behavior(tmp_path: Pat
 
 
 def test_apply_on_file_base_path_matches_iteration_behavior(tmp_path: Path):
+    """
+    `apply()` should match iteration when the base path is a file.
+
+    The test creates a file base path, records iteration output, then verifies
+    that `apply()` visits exactly the same paths.
+    """
     file_path = tmp_path / 'a_file.txt'
     file_path.write_text('hi')
 
