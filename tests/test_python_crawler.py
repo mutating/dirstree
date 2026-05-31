@@ -201,7 +201,9 @@ def test_python_apply_only_visits_py_files(crawl_directory_path: Union[str, Path
     compares the callback order with normal PythonCrawler iteration.
     """
     seen: list = []
+
     PythonCrawler(crawl_directory_path).apply(seen.append)
+
     assert seen
     assert all(p.suffix == '.py' for p in seen)
     assert seen == list(PythonCrawler(crawl_directory_path))
@@ -215,7 +217,9 @@ def test_python_apply_respects_exclude(crawl_directory_path: Union[str, Path]):
     with normal iteration using the same exclude option.
     """
     seen: list = []
+
     PythonCrawler(crawl_directory_path, exclude=['__init__.py']).apply(seen.append)
+
     assert seen == list(PythonCrawler(crawl_directory_path, exclude=['__init__.py']))
 
 
@@ -227,7 +231,9 @@ def test_python_apply_respects_custom_filter(crawl_directory_path: Union[str, Pa
     every callback input matches that predicate.
     """
     seen: list = []
+
     PythonCrawler(crawl_directory_path, filter=lambda x: 'simple' in x.name).apply(seen.append)
+
     assert seen
     assert all('simple' in p.name for p in seen)
 
@@ -240,5 +246,50 @@ def test_python_apply_with_cancelled_token(crawl_directory_path: Union[str, Path
     not invoke the callback.
     """
     seen: list = []
+
     PythonCrawler(crawl_directory_path, token=SimpleToken(cancelled=True)).apply(seen.append)
+
     assert seen == []
+
+
+def test_python_crawler_freeze_yields_only_python_files(crawl_directory_path: Union[str, Path]):
+    """
+    `PythonCrawler(freeze=True)` should yield exactly the same `.py` files as
+    the non-frozen `PythonCrawler` on an unchanging filesystem.
+
+    The test confirms that plumbing `freeze` through `super().__init__` does
+    not interfere with the hardcoded `extensions=('.py',)` filter that
+    `PythonCrawler` applies on every yield.
+    """
+    assert set(PythonCrawler(crawl_directory_path, freeze=True)) == set(PythonCrawler(crawl_directory_path))
+
+
+def test_python_crawler_freeze_apply_handles_deletion(tmp_path: Path):
+    """
+    `PythonCrawler` with `freeze=True` should let `apply()` delete every
+    visited `.py` file safely while leaving non-Python files untouched.
+
+    The test creates a mix of `.py` and `.txt` files in `tmp_path`, runs
+    `PythonCrawler(tmp_path, freeze=True).apply(...)` with an unlink-and-
+    record callback, and verifies that exactly the original `.py` files are
+    recorded and removed from disk while `.txt` files are still on disk and
+    never received the callback.
+    """
+    py_files = [tmp_path / f'p{i}.py' for i in range(3)]
+    txt_files = [tmp_path / f't{i}.txt' for i in range(2)]
+    for path in (*py_files, *txt_files):
+        path.touch()
+
+    processed: list = []
+
+    def callback(path: Path) -> None:
+        processed.append(path)
+        path.unlink()
+
+    PythonCrawler(tmp_path, freeze=True).apply(callback)
+
+    assert set(processed) == set(py_files)
+    for path in py_files:
+        assert not path.exists()
+    for path in txt_files:
+        assert path.exists()
