@@ -1,4 +1,3 @@
-import errno
 import os
 import stat
 import sys
@@ -527,8 +526,8 @@ def test_only_files_false_yields_symlink_nodes_when_supported(tmp_path: Path):
 
 
 @pytest.mark.skipif(
-    sys.platform == 'win32' or sys.version_info >= (3, 13),
-    reason='Path.rglob does not raise PermissionError for chmod(0) directories on Windows, and on Python 3.13+ pathlib silently skips inaccessible entries.',
+    sys.platform == 'win32',
+    reason='Windows ignores chmod(0) on directories owned by the current user, so PermissionError is not produced.',
 )
 @pytest.mark.parametrize(
     'freeze_kwargs',
@@ -538,53 +537,20 @@ def test_only_files_false_yields_symlink_nodes_when_supported(tmp_path: Path):
         {'freeze': True},
     ],
 )
-def test_rglob_errors_propagate_with_only_files_false(tmp_path: Path, freeze_kwargs):
+def test_unreadable_subdirectory_is_silently_skipped_on_posix(tmp_path: Path, freeze_kwargs):
     """
-    Traversal errors from `Path.rglob` should not be swallowed.
+    On every Python version in the supported matrix, `pathlib.Path.rglob`
+    catches `PermissionError` from `os.scandir` internally and just stops
+    descending into the unreadable subtree — it does not raise. The crawler
+    must transparently inherit that contract: an unreadable subdirectory does
+    not break iteration, it simply contributes nothing to the result, while
+    the rest of the tree iterates as usual.
 
-    The test creates an unreadable directory and verifies that the crawler
-    propagates the same `PermissionError` that `Path.rglob` would surface.
-    """
-    blocked = tmp_path / 'blocked'
-    blocked.mkdir()
-    (blocked / 'file.txt').write_text('content')
-    blocked.chmod(0)
-
-    try:
-        with pytest.raises(
-            PermissionError,
-            match=match(str(PermissionError(errno.EACCES, os.strerror(errno.EACCES), str(blocked)))),
-        ):
-            list(Crawler(tmp_path, only_files=False, **freeze_kwargs))
-    finally:
-        blocked.chmod(stat.S_IRWXU)
-
-
-@pytest.mark.skipif(
-    sys.platform == 'win32' or sys.version_info < (3, 13),
-    reason='pathlib silently swallows OSError during traversal only on POSIX Python 3.13+.',
-)
-@pytest.mark.parametrize(
-    'freeze_kwargs',
-    [
-        {},
-        {'freeze': False},
-        {'freeze': True},
-    ],
-)
-def test_unreadable_subdirectory_is_silently_skipped_on_python_3_13_plus_posix(tmp_path: Path, freeze_kwargs):
-    """
-    On POSIX Python 3.13+, `Path.rglob` deliberately swallows `OSError` (and
-    its `PermissionError` subclass) for inaccessible entries to match
-    `glob.glob` behaviour. The crawler must transparently inherit that
-    contract: an unreadable subdirectory does not raise — it just contributes
-    nothing to the result, while the rest of the tree iterates as usual.
-
-    Mirror of `test_rglob_errors_propagate_with_only_files_false`, which is
-    skipped on this same combination of platform and Python version because
-    the propagation invariant simply does not apply there. Together the two
-    tests pin down `Crawler`'s observable behaviour around `OSError` from
-    `rglob` across the whole CI matrix.
+    The test pins down `Crawler`'s observable behaviour around `OSError` from
+    `rglob`: the visible peer file is yielded, the unreadable directory entry
+    itself is yielded (its parent's `scandir` listed it before the recursion
+    failed), and the file hiding inside the unreadable directory is silently
+    absent. No exception escapes.
     """
     visible = tmp_path / 'visible.txt'
     visible.write_text('content')
@@ -1829,33 +1795,6 @@ def test_apply_on_nonexistent_base_path_matches_iteration_behavior(tmp_path: Pat
     assert seen == iter_paths
 
 
-@pytest.mark.skipif(
-    sys.platform == 'win32' or sys.version_info >= (3, 13),
-    reason='Path.rglob does not raise PermissionError for chmod(0) directories on Windows, and on Python 3.13+ pathlib silently skips inaccessible entries.',
-)
-def test_apply_propagates_rglob_errors_with_only_files_false(tmp_path: Path):
-    """
-    `apply()` should propagate traversal errors from all-entity crawling.
-
-    The test creates an unreadable directory and verifies that `apply()` via the
-    crawler surfaces the same `PermissionError` that direct `rglob` would raise.
-    """
-    blocked = tmp_path / 'blocked'
-    blocked.mkdir()
-    (blocked / 'file.txt').write_text('content')
-    blocked.chmod(0)
-    seen: list = []
-
-    try:
-        with pytest.raises(
-            PermissionError,
-            match=match(str(PermissionError(errno.EACCES, os.strerror(errno.EACCES), str(blocked)))),
-        ):
-            Crawler(tmp_path, only_files=False).apply(seen.append)
-    finally:
-        blocked.chmod(stat.S_IRWXU)
-
-
 @pytest.mark.parametrize(
     'freeze_kwargs',
     [
@@ -1956,7 +1895,7 @@ def test_freeze_filter_called_for_all_paths_during_snapshot_construction_before_
     happened. This precludes the lazy interpretation where the filter would be
     called incrementally with each yield.
     """
-    files = sorted(tmp_path / f'f{i}.txt' for i in range(5))
+    files = [tmp_path / f'f{i}.txt' for i in range(5)]
     for path in files:
         path.touch()
 
@@ -1978,10 +1917,10 @@ def test_freeze_filter_not_called_again_during_remaining_iteration(tmp_path: Pat
     Once the snapshot has been materialised during the first `next()`, the
     user filter is not invoked again while the remaining snapshot is yielded.
 
-    The test complements C1: the snapshot is built exactly once and reused for
-    the rest of the iteration. We freeze the filter-call count immediately
-    after the first `next()`, drain the iterator, and verify the count has not
-    increased.
+    The test complements the "all paths seen before first yield" companion: the
+    snapshot is built exactly once and reused for the rest of the iteration.
+    We freeze the filter-call count immediately after the first `next()`,
+    drain the iterator, and verify the count has not increased.
     """
     files = [tmp_path / f'f{i}.txt' for i in range(5)]
     for path in files:
@@ -2008,11 +1947,11 @@ def test_without_freeze_filter_is_called_lazily(tmp_path: Path):
     invoked lazily so that after the first `next()` only a strict subset of
     paths has been seen.
 
-    The contrast with C1 shows that the timing difference is exactly what
-    `freeze=True` changes. The filter is intentionally always-`True` so that
-    `len(seen) < N` cannot accidentally hold for some other reason (e.g.
-    selective filtering). The strict bound `0 < len(seen) < N` proves the
-    iteration is incremental.
+    The contrast with the `freeze=True` companion test shows that the timing
+    difference is exactly what `freeze=True` changes. The filter is
+    intentionally always-`True` so that `len(seen) < N` cannot accidentally
+    hold for some other reason (e.g. selective filtering). The strict bound
+    `0 < len(seen) < N` proves the iteration is incremental.
     """
     files = [tmp_path / f'f{i}.txt' for i in range(5)]
     for path in files:
@@ -2063,10 +2002,11 @@ def test_freeze_does_not_yield_files_created_after_snapshot(tmp_path: Path):
     A file created between snapshot construction and the end of iteration
     should not be yielded.
 
-    The complement of C4 — the snapshot does not pick up new files that arrive
-    after construction. The test creates two files, starts iteration to force
-    snapshot materialisation, then creates a third file before draining the
-    rest; the yielded set is exactly the two original files.
+    Counterpart of the delete-during-apply test: the snapshot does not pick up
+    new files that arrive after construction. The test creates two files,
+    starts iteration to force snapshot materialisation, then creates a third
+    file before draining the rest; the yielded set is exactly the two
+    original files.
     """
     file1 = tmp_path / 'a.txt'
     file2 = tmp_path / 'b.txt'
@@ -2421,7 +2361,7 @@ def test_group_with_freeze_in_children_matches_unfrozen_group(
     assert set(mix(crawl_directory_path, second_crawl_directory_path)) == expected
 
 
-def test_group_with_frozen_child_apply_with_deletion(tmp_path: Path):
+def test_group_with_frozen_children_apply_with_deletion(tmp_path: Path):
     """
     A `CrawlersGroup` whose children are frozen `Crawler` instances should
     let `apply()` delete every visited file safely.

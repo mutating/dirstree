@@ -259,9 +259,14 @@ def test_python_crawler_freeze_yields_only_python_files(crawl_directory_path: Un
 
     The test confirms that plumbing `freeze` through `super().__init__` does
     not interfere with the hardcoded `extensions=('.py',)` filter that
-    `PythonCrawler` applies on every yield.
+    `PythonCrawler` applies on every yield. The non-emptiness assertion
+    guards against a vacuous pass if the fixture were ever to lose its `.py`
+    files.
     """
-    assert set(PythonCrawler(crawl_directory_path, freeze=True)) == set(PythonCrawler(crawl_directory_path))
+    frozen = set(PythonCrawler(crawl_directory_path, freeze=True))
+
+    assert frozen
+    assert frozen == set(PythonCrawler(crawl_directory_path))
 
 
 def test_python_crawler_freeze_apply_handles_deletion(tmp_path: Path):
