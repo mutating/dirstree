@@ -35,6 +35,7 @@ There are many libraries for traversing directories. You can also do this using 
 - [**Filtering**](#filtering)
 - [**Working with Cancellation Tokens**](#working-with-cancellation-tokens)
 - [**Combination**](#combination)
+- [**Transactionality**](#transactionality)
 
 
 ## Installation
@@ -178,3 +179,16 @@ for path in Crawler('../dirstree', '../cantok'):
 ```
 
 > ↑ In this case, there is no deduplication of paths.
+
+
+## Transactionality
+
+If you plan to modify the directory while iterating over it — for example, deleting or moving files inside an `apply()` callback — pass `freeze=True` to take a snapshot of every matching path up front, then iterate that snapshot instead of the live filesystem:
+
+```python
+Crawler('path/to/directory', freeze=True).apply(lambda p: p.unlink())
+```
+
+> ↑ The snapshot is built on the first step of iteration, with every filter and cancellation token already applied. After that, any creation, renaming or deletion happening in the directory does not affect what is yielded — each call to `go()` or `iter()` produces its own fresh snapshot.
+
+> ↑ Without `freeze=True` the order of yielded paths depends on the live state of the filesystem, so mid-iteration mutation may silently skip or duplicate entries.
