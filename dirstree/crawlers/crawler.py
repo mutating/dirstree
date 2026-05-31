@@ -31,7 +31,7 @@ class Crawler(AbstractCrawler):
     Only the first argument with the directory path is required, the rest are optional.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *paths: Union[str, Path],
         extensions: Optional[Collection[str]] = None,
@@ -39,6 +39,7 @@ class Crawler(AbstractCrawler):
         filter: Optional[Callable[[Path], bool]] = None,  # noqa: A002
         token: AbstractToken = DefaultToken(),  # noqa: B008
         only_files: bool = True,
+        freeze: bool = False,
     ) -> None:
         if extensions is not None and not only_files:
             raise IncompatibleCrawlerOptionsError(
@@ -61,6 +62,7 @@ class Crawler(AbstractCrawler):
         self.filter = filter
         self.token = token
         self.only_files = only_files
+        self.frozen = freeze
 
         self.addictional_repr_filters: Dict[str, Callable[[Any], bool]] = {}
 
@@ -71,6 +73,7 @@ class Crawler(AbstractCrawler):
             'filter': not_none,
             'token': lambda x: not isinstance(x, DefaultToken),
             'only_files': lambda x: x is False,
+            'freeze': lambda x: x is True,
         }
         filters.update(self.addictional_repr_filters)
 
@@ -83,13 +86,12 @@ class Crawler(AbstractCrawler):
                 'filter': self.filter,
                 'token': self.token,
                 'only_files': self.only_files,
+                'freeze': self.frozen,
             },
             filters=filters,  # type: ignore[arg-type]
         )
 
-    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:  # noqa: B008
-        token = token + self.token
-
+    def _traverse(self, token: AbstractToken) -> Generator[Path, None, None]:
         excludes_spec = pathspec.PathSpec.from_lines('gitwildmatch', self.exclude)
 
         for path in self.paths:
@@ -111,3 +113,15 @@ class Crawler(AbstractCrawler):
                         break
             else:
                 break
+
+    def go(self, token: AbstractToken = DefaultToken()) -> Generator[Path, None, None]:  # noqa: B008
+        token = token + self.token
+
+        if self.frozen:
+            snapshot = list(self._traverse(token))
+            for path in snapshot:
+                if not token:
+                    break
+                yield path
+        else:
+            yield from self._traverse(token)
