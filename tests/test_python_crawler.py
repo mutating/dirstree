@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
-from cantok import ConditionToken, SimpleToken
+from cantok import CancellationError, ConditionToken, SimpleToken
 from full_match import match
 from sigmatch.errors import SignatureMismatchError
 
@@ -131,6 +131,11 @@ def test_crawl_test_directory_with_exclude_inits(
         (PythonCrawler('.', filter=lambda x: True), "PythonCrawler('.', filter=lambda x: True)"),  # noqa: ARG005
         (PythonCrawler('.', token=ConditionToken(lambda: True)), "PythonCrawler('.', token=ConditionToken(λ))"),
         (PythonCrawler('../dirstree') + PythonCrawler('../cantok'), "CrawlersGroup([PythonCrawler('../dirstree'), PythonCrawler('../cantok')])"),
+        (PythonCrawler('.', raise_on_cancel=False), "PythonCrawler('.')"),
+        (PythonCrawler('.', raise_on_cancel=True), "PythonCrawler('.', raise_on_cancel=True)"),
+        (PythonCrawler('.', raise_on_cancel=ValueError('x')), "PythonCrawler('.', raise_on_cancel=ValueError('x'))"),
+        (PythonCrawler('.', raise_on_cancel=ValueError), "PythonCrawler('.', raise_on_cancel=ValueError)"),
+        (PythonCrawler('.', freeze=True, raise_on_cancel=True), "PythonCrawler('.', freeze=True, raise_on_cancel=True)"),
     ],
 )
 def test_python_crawler_repr(crawler, expected_repr):
@@ -298,3 +303,49 @@ def test_python_crawler_freeze_apply_handles_deletion(tmp_path: Path):
         assert not path.exists()
     for path in txt_files:
         assert path.exists()
+
+
+def test_python_crawler_raise_on_cancel_yields_only_python_files_then_raises(tmp_path: Path):
+    """
+    `PythonCrawler` with `raise_on_cancel=True` yields exactly `n` `.py` paths and then raises.
+
+    The fixture mixes `.py` and `.txt` files in a fresh temporary directory.
+    A counter inside the filter — which is invoked only for `.py` files
+    because the hardcoded `extensions=('.py',)` runs first — drives a
+    `ConditionToken` that cancels after `n` `.py` matches. The test
+    therefore demonstrates that the extension filter and the cancellation
+    machinery coexist inside `PythonCrawler` specifically and that
+    plumbing `raise_on_cancel` through `super().__init__` does not break
+    that interaction.
+    """
+    for index in range(3):
+        (tmp_path / f'p{index}.py').touch()
+    for index in range(2):
+        (tmp_path / f't{index}.txt').touch()
+
+    n = 2
+    count = 0
+
+    def empty_filter(path: Path) -> bool:  # noqa: ARG001
+        nonlocal count
+        count += 1
+        return True
+
+    def condition() -> bool:
+        return count == n
+
+    token = ConditionToken(condition)
+    crawler = PythonCrawler(tmp_path, token=token, filter=empty_filter, raise_on_cancel=True)
+
+    iterator = iter(crawler)
+    actual_prefix = [next(iterator) for _ in range(n)]
+    try:
+        token.check()
+    except CancellationError as original_exception:
+        expected_message = str(original_exception)
+
+    with pytest.raises(CancellationError, match=match(expected_message)):
+        next(iterator)
+
+    assert len(actual_prefix) == n
+    assert all(path.suffix == '.py' for path in actual_prefix)

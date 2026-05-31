@@ -4,10 +4,19 @@ import sys
 from functools import partial
 from inspect import Parameter, signature
 from pathlib import Path
-from typing import List, Type, Union
+from typing import Any, Dict, List, Type, Union
 
 import pytest
-from cantok import ConditionToken, DefaultToken, SimpleToken
+from cantok import (
+    AbstractToken,
+    CancellationError,
+    ConditionCancellationError,
+    ConditionToken,
+    CounterCancellationError,
+    CounterToken,
+    DefaultToken,
+    SimpleToken,
+)
 from full_match import match
 from sigmatch.errors import SignatureMismatchError
 
@@ -17,6 +26,7 @@ from dirstree import (
     PythonCrawler,
 )
 from dirstree.crawlers.group import CrawlersGroup
+from tests.conftest import extract_cancellation_message, predict_raised_exception
 
 INCOMPATIBLE_OPTIONS_MESSAGE = (
     'The "extensions" and "only_files=False" options are incompatible: '
@@ -777,6 +787,19 @@ def test_repr():
     assert repr(Crawler('.', token=ConditionToken(lambda: True), freeze=True)) == "Crawler('.', token=ConditionToken(λ), freeze=True)"
     assert repr(PythonCrawler('.', freeze=True)) == "PythonCrawler('.', freeze=True)"
 
+    assert repr(Crawler('.', raise_on_cancel=False)) == "Crawler('.')"
+    assert repr(Crawler('.', raise_on_cancel=True)) == "Crawler('.', raise_on_cancel=True)"
+    assert repr(Crawler('.', raise_on_cancel=ValueError('x'))) == "Crawler('.', raise_on_cancel=ValueError('x'))"
+    assert repr(Crawler('.', raise_on_cancel=ValueError)) == "Crawler('.', raise_on_cancel=ValueError)"
+    assert repr(Crawler('.', extensions=['.py'], raise_on_cancel=True)) == "Crawler('.', extensions=['.py'], raise_on_cancel=True)"
+    assert repr(Crawler('.', only_files=False, raise_on_cancel=True)) == "Crawler('.', only_files=False, raise_on_cancel=True)"
+    assert repr(Crawler('.', filter=custom_filter, raise_on_cancel=True)) == "Crawler('.', filter=custom_filter, raise_on_cancel=True)"
+    assert repr(Crawler('.', token=ConditionToken(lambda: True), raise_on_cancel=True)) == "Crawler('.', token=ConditionToken(λ), raise_on_cancel=True)"
+    assert repr(Crawler('.', freeze=True, raise_on_cancel=True)) == "Crawler('.', freeze=True, raise_on_cancel=True)"
+    assert repr(PythonCrawler('.', raise_on_cancel=True)) == "PythonCrawler('.', raise_on_cancel=True)"
+    assert repr(PythonCrawler('.', raise_on_cancel=ValueError('x'))) == "PythonCrawler('.', raise_on_cancel=ValueError('x'))"
+    assert repr(PythonCrawler('.', raise_on_cancel=ValueError)) == "PythonCrawler('.', raise_on_cancel=ValueError)"
+
 
 @pytest.mark.parametrize(
     'freeze_kwargs',
@@ -903,6 +926,13 @@ def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path
 
 
 @pytest.mark.parametrize(
+    'raise_on_cancel_kwargs',
+    [
+        {},
+        {'raise_on_cancel': False},
+    ],
+)
+@pytest.mark.parametrize(
     'factory',
     [
         Crawler,
@@ -918,13 +948,15 @@ def test_argument_of_filter_is_path_object(crawl_directory_path: Union[str, Path
         3,
     ],
 )
-def test_cancel_after_n_iterations(crawl_directory_path: Union[str, Path], n: int, factory: Type[Crawler]):
+def test_cancel_after_n_iterations(crawl_directory_path: Union[str, Path], n: int, factory: Type[Crawler], raise_on_cancel_kwargs: Dict[str, Any]):
     """
     Cancellation should keep the same prefix behavior for both crawler classes.
 
     The test increments a counter from the filter, cancels when the counter
     reaches `n`, and checks that traversal returns the first `n` uncancelled
-    paths.
+    paths. The `raise_on_cancel_kwargs` parametrize asserts that both the
+    omitted form and an explicit `raise_on_cancel=False` preserve the silent
+    cancellation contract — the new flag must not change the default path.
     """
     index = 0
 
@@ -938,11 +970,18 @@ def test_cancel_after_n_iterations(crawl_directory_path: Union[str, Path], n: in
 
     token = ConditionToken(condition)
 
-    crawler = factory(crawl_directory_path, token=token, filter=empty_filter)
+    crawler = factory(crawl_directory_path, token=token, filter=empty_filter, **raise_on_cancel_kwargs)
 
     assert list(factory(crawl_directory_path))[:n] == list(crawler)
 
 
+@pytest.mark.parametrize(
+    'raise_on_cancel_kwargs',
+    [
+        {},
+        {'raise_on_cancel': False},
+    ],
+)
 @pytest.mark.parametrize(
     'freeze_kwargs',
     [
@@ -958,14 +997,17 @@ def test_cancel_after_n_iterations(crawl_directory_path: Union[str, Path], n: in
         PythonCrawler,
     ],
 )
-def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler], freeze_kwargs):
+def test_cancelled_token(crawl_directory_path: Union[str, Path], factory: Type[Crawler], freeze_kwargs, raise_on_cancel_kwargs: Dict[str, Any]):
     """
     An already-cancelled token should suppress traversal.
 
     The test passes a cancelled token to both crawler classes and expects an
-    empty result.
+    empty result. The `raise_on_cancel_kwargs` parametrize asserts that both
+    the omitted form and an explicit `raise_on_cancel=False` preserve silent
+    cancellation under every `freeze` mode — the new flag must not change the
+    default path.
     """
-    assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True), **freeze_kwargs)) == []
+    assert list(factory(crawl_directory_path, token=SimpleToken(cancelled=True), **freeze_kwargs, **raise_on_cancel_kwargs)) == []
 
 
 @pytest.mark.parametrize(
@@ -1846,14 +1888,23 @@ def test_freeze_default_is_false(factory: Type[Crawler]):
         PythonCrawler,
     ],
 )
-def test_freeze_is_keyword_only(factory: Type[Crawler]):
+@pytest.mark.parametrize(
+    'parameter_name',
+    [
+        'freeze',
+        'raise_on_cancel',
+    ],
+)
+def test_keyword_only(factory: Type[Crawler], parameter_name: str):
     """
-    The new `freeze` option should refuse positional arguments.
+    Constructor options that look like they could be positional must be keyword-only.
 
-    The test inspects the public constructor signature and verifies that the
-    parameter is keyword-only for both crawler classes.
+    The test inspects the public constructor signature and verifies that each
+    listed parameter is keyword-only for both crawler classes. Both `freeze`
+    and `raise_on_cancel` are validated here so the same property is locked
+    down by a single parametrized test.
     """
-    assert signature(factory).parameters['freeze'].kind is Parameter.KEYWORD_ONLY
+    assert signature(factory).parameters[parameter_name].kind is Parameter.KEYWORD_ONLY
 
 
 @pytest.mark.parametrize(
@@ -2410,3 +2461,923 @@ def test_crawlers_group_rejects_freeze_keyword(crawl_directory_path: Union[str, 
 
     with pytest.raises(TypeError, match=match(expected_message)):
         CrawlersGroup([Crawler(crawl_directory_path)], freeze=True)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_default_value_is_false(factory: Type[Crawler]):
+    """
+    The new `raise_on_cancel` option should default to `False` for every crawler class.
+
+    The test guards backward compatibility: code that does not mention
+    `raise_on_cancel` must observe `crawler.raise_on_cancel is False`. The
+    check uses `is False` (not just falsiness) so a future accidental drift
+    to `None` or another falsy value also fails this guard.
+    """
+    assert factory('.').raise_on_cancel is False
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize('freeze', [False, True])
+def test_raise_on_cancel_explicit_false_silent_cancellation(crawl_directory_path: Union[str, Path], factory: Type[Crawler], freeze: bool):
+    """
+    Setting `raise_on_cancel=False` explicitly should preserve silent cancellation.
+
+    The test passes an already-cancelled token together with an explicit
+    `raise_on_cancel=False` and confirms that the crawler returns an empty
+    list without raising. Parametrizing over `freeze` ensures the silent
+    contract holds both in the lazy and the snapshot modes.
+    """
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), freeze=freeze, raise_on_cancel=False)
+
+    assert list(crawler) == []
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_invalid_type_raises_type_error(factory: Type[Crawler]):
+    """
+    Construction must reject any value that is not bool, BaseException instance, or BaseException subclass.
+
+    Inputs `0` and `1` are int-but-not-bool; `type` is a class but not a
+    `BaseException` subclass; the locally-defined `not_an_exception` class
+    is a user class that does not inherit `BaseException`. The test locks
+    the exact validation message so a future cosmetic change to the message
+    also surfaces here.
+    """
+    class not_an_exception:  # noqa: N801
+        pass
+
+    invalid_values: List[Any] = ['string', 0, 1, 5, {}, [], (lambda: None), object(), None, type, not_an_exception]
+
+    for invalid_value in invalid_values:
+        with pytest.raises(
+            TypeError,
+            match=match(
+                'raise_on_cancel must be a bool, a BaseException instance, '
+                'or a BaseException subclass whose constructor accepts a single positional argument.',
+            ),
+        ):
+            factory('.', raise_on_cancel=invalid_value)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_class_with_incompatible_init_signature_rejected_at_construction(factory: Type[Crawler]):
+    """
+    A BaseException subclass whose __init__ cannot accept a single positional argument is rejected at construction.
+
+    The user may pass a class with an overridden `__init__` requiring, for
+    example, two positional arguments or zero. Without a signature check at
+    construction time we would only hit a `TypeError` from the constructor
+    call deep inside `_check_token` at iteration time, with no clue that the
+    real cause is a misconfigured `raise_on_cancel`. A sigmatch-based check
+    in `__init__` catches the problem immediately with the standard
+    validation message.
+    """
+    class NoArgError(BaseException):
+        def __init__(self) -> None:
+            super().__init__()
+
+    class TwoArgError(BaseException):
+        def __init__(self, code: int, message: str) -> None:
+            super().__init__(f'{code}: {message}')
+
+    for bad_class in [NoArgError, TwoArgError]:
+        with pytest.raises(
+            TypeError,
+            match=match(
+                'raise_on_cancel must be a bool, a BaseException instance, '
+                'or a BaseException subclass whose constructor accepts a single positional argument.',
+            ),
+        ):
+            factory('.', raise_on_cancel=bad_class)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_accepts_class_with_compatible_init_signature(factory: Type[Crawler]):
+    """
+    Built-in exceptions and user classes whose __init__ accepts a single positional argument must be accepted.
+
+    Built-in exception types (`ValueError`, `RuntimeError`, ...) cannot be
+    introspected via `inspect.signature`, but they accept any args via the
+    underlying C-level `*args`; the validator must not reject them. Custom
+    subclasses without an override inherit `BaseException`'s `(*args,
+    **kwargs)` signature and must be accepted as well, alongside explicit
+    one-arg / star-args / one-optional-arg overrides.
+    """
+    class NoOverrideError(BaseException):
+        pass
+
+    class OneArgError(BaseException):
+        def __init__(self, message: str) -> None:
+            super().__init__(message)
+
+    class StarArgsError(BaseException):
+        def __init__(self, *args: object) -> None:
+            super().__init__(*args)
+
+    class OptionalArgError(BaseException):
+        def __init__(self, message: str = '') -> None:
+            super().__init__(message)
+
+    good_classes = [ValueError, RuntimeError, BaseException, NoOverrideError, OneArgError, StarArgsError, OptionalArgError]
+
+    for good_class in good_classes:
+        crawler = factory('.', raise_on_cancel=good_class)
+        assert crawler.cancellation_exception is good_class
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_true_pre_cancelled_raises_native_cantok(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    With `raise_on_cancel=True` and an already-cancelled SimpleToken, iteration raises CancellationError verbatim.
+
+    This is the baseline scenario for the `True` form: the native cantok
+    exception is re-raised unchanged, with the same message that
+    `SimpleToken(cancelled=True).check()` would produce.
+    """
+    expected_message = extract_cancellation_message(SimpleToken)
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=True)
+
+    with pytest.raises(CancellationError, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_instance_pre_cancelled_raises_same_instance(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    With `raise_on_cancel=<instance>`, iteration raises the exact same instance.
+
+    The test passes a `ValueError("user message")` and asserts both the
+    message and (more importantly) `error.value is injected_error` — no
+    clone, no wrapping. Locks the identity contract for the instance form.
+    """
+    injected_error = ValueError('user message')
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=injected_error)
+
+    with pytest.raises(ValueError, match=match('user message')) as error:
+        list(crawler)
+
+    assert error.value is injected_error
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_class_pre_cancelled_raises_new_instance_with_native_message(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    With `raise_on_cancel=<class>`, iteration raises a fresh instance constructed from the cantok message.
+
+    The class is called with `str(original_exception)` as its single
+    positional argument, so the raised instance is of the user-passed class
+    but carries cantok's native message verbatim.
+    """
+    expected_message = extract_cancellation_message(SimpleToken)
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=ValueError)
+
+    with pytest.raises(ValueError, match=match(expected_message)) as error:
+        list(crawler)
+
+    assert isinstance(error.value, ValueError)
+    assert error.value.args == (expected_message,)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [
+        ValueError('x'),
+        ValueError,
+    ],
+    ids=['instance', 'class'],
+)
+def test_raise_on_cancel_non_true_chains_cause_to_native_cantok(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[BaseException, Type[BaseException]]):
+    """
+    Both non-True forms set `__cause__` to the underlying cantok cancellation exception.
+
+    The implementation uses `raise user_exception from original_exception`
+    so the original cancellation is reachable via `__cause__`. Both the
+    instance form and the class form go through that same transformation.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)) as error:
+        list(crawler)
+
+    assert isinstance(error.value.__cause__, CancellationError)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_true_has_no_synthetic_cause(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    With `raise_on_cancel=True`, the raised cantok exception is not wrapped in itself.
+
+    For the True form the implementation does a bare `raise` (re-raises the
+    caught exception), so no `from ...` chaining happens. `__cause__` must
+    therefore be `None`. This locks the boundary between the True form
+    (no chaining) and the instance/class forms (chained).
+    """
+    expected_message = extract_cancellation_message(SimpleToken)
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=True)
+
+    with pytest.raises(CancellationError, match=match(expected_message)) as error:
+        list(crawler)
+
+    assert error.value.__cause__ is None
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('user message'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+@pytest.mark.parametrize('n', [0, 1, 2, 3])
+def test_raise_on_cancel_mid_iteration_yields_prefix_then_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]], n: int):
+    """
+    Cancellation triggered mid-iteration yields the prefix of paths before raising.
+
+    The test increments a counter inside a no-op filter, cancels when the
+    counter reaches `n`, drives `next()` exactly `n` times to collect the
+    prefix, then asserts that the next call raises. Parametrized across all
+    three value forms because the prefix-then-raise contract is independent of
+    the form: ``predict_raised_exception`` maps each form to its expected
+    ``(type, message)`` pair using the cantok-native message extracted from
+    the now-cancelled token.
+    """
+    index = 0
+
+    def empty_filter(path: Path) -> bool:  # noqa: ARG001
+        nonlocal index
+        index += 1
+        return True
+
+    def condition() -> bool:
+        return index == n
+
+    token = ConditionToken(condition)
+    crawler = factory(crawl_directory_path, token=token, filter=empty_filter, raise_on_cancel=raise_on_cancel_value)
+    expected_prefix = list(factory(crawl_directory_path))[:n]
+
+    iterator = iter(crawler)
+    actual_prefix = [next(iterator) for _ in range(n)]
+
+    try:
+        token.check()
+    except CancellationError as original_exception:
+        native_message = str(original_exception)
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, native_message)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        next(iterator)
+
+    assert actual_prefix == expected_prefix
+
+
+@pytest.mark.parametrize(
+    ('token', 'expected_type'),
+    [
+        (SimpleToken(cancelled=True), CancellationError),
+        (CounterToken(0), CounterCancellationError),
+        (ConditionToken(lambda: True), ConditionCancellationError),
+    ],
+    ids=['simple', 'counter', 'condition'],
+)
+def test_raise_on_cancel_true_raises_specific_cantok_subclass_per_token_type(crawl_directory_path: Union[str, Path], token: AbstractToken, expected_type: Type[BaseException]):
+    """
+    The True form propagates the exact cantok subclass that corresponds to the token type.
+
+    A `CounterToken` cancellation is `CounterCancellationError`, a
+    `ConditionToken` cancellation is `ConditionCancellationError`, and a
+    `SimpleToken` cancellation is the base `CancellationError`. The crawler
+    must surface the specific subclass rather than a flattened
+    `CancellationError`.
+    """
+    try:
+        token.check()
+    except CancellationError as original_exception:
+        expected_message = str(original_exception)
+    crawler = Crawler(crawl_directory_path, token=token, raise_on_cancel=True)
+
+    with pytest.raises(expected_type, match=match(expected_message)) as error:
+        list(crawler)
+
+    assert type(error.value) is expected_type
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_normal_iteration_without_cancellation_does_not_raise(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    With the flag set but no cancellation, iteration completes normally and matches the flag-less baseline.
+
+    Defends against an "always raise" bug: the new machinery must only fire
+    when `bool(token)` is False, never on the green path. Verified by
+    comparing the full iteration result to a baseline crawler without the
+    flag.
+    """
+    flagged = factory(crawl_directory_path, raise_on_cancel=raise_on_cancel_value)
+    baseline = factory(crawl_directory_path)
+
+    assert list(flagged) == list(baseline)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_class_works_with_pure_base_exception_subclass(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    A class deriving from BaseException (not Exception) must be accepted and raised.
+
+    Confirms that the validation accepts the wider `BaseException` family,
+    matching the documented allowed types. Without this, the implementation
+    might accidentally narrow to `Exception` (the most common base) and
+    break callers who use a custom `BaseException`-derived class.
+    """
+    class MyBaseError(BaseException):
+        pass
+
+    expected_message = extract_cancellation_message(SimpleToken)
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=MyBaseError)
+
+    with pytest.raises(MyBaseError, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_class_cantok_cancellation_error_itself_rejected_due_to_two_arg_signature(factory: Type[Crawler]):
+    """
+    Passing `cantok.CancellationError` as the class form is rejected at construction.
+
+    `CancellationError.__init__(self, message, token)` requires two
+    positional arguments, so the sigmatch-based validator correctly
+    classifies it as a class that cannot be called with a single positional
+    string argument. The user gets the standard `raise_on_cancel`
+    validation `TypeError` immediately at construction time rather than a
+    cryptic "missing token argument" `TypeError` deep inside iteration.
+    """
+    with pytest.raises(
+        TypeError,
+        match=match(
+            'raise_on_cancel must be a bool, a BaseException instance, '
+            'or a BaseException subclass whose constructor accepts a single positional argument.',
+        ),
+    ):
+        factory('.', raise_on_cancel=CancellationError)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_iter_construction_is_lazy_does_not_raise(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    Building the iterator with `iter()` is lazy: no raise until the first `next()`.
+
+    A generator function's body does not execute until the first `next()`
+    call. The test passes a pre-cancelled token together with the flag,
+    constructs the iterator without raising, and only asserts that
+    `next(iterator)` raises. Locks that we did not accidentally add an
+    eager check in `__iter__`.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    iterator = iter(crawler)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        next(iterator)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_second_iteration_of_same_crawler_also_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    The flag is not one-shot: every fresh `go()` re-checks the token and raises.
+
+    Each `list(crawler)` call goes through `go()`, which composes the
+    constructor-time token with the call-time token and runs `_check_token`
+    independently. A pre-cancelled token therefore continues to raise on
+    every iteration.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_same_instance_raises_in_two_independent_crawlers(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    The same exception instance can be configured on two crawlers and both raise it by identity.
+
+    Locks that `cancellation_exception` is stored by identity on each
+    crawler and is not "owned" by a specific instance. Each crawler reaches
+    the same identity on its own `_check_token` path.
+    """
+    injected_error = ValueError('shared')
+    first_crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=injected_error)
+    second_crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=injected_error)
+
+    with pytest.raises(ValueError, match=match('shared')) as first_error:
+        list(first_crawler)
+    with pytest.raises(ValueError, match=match('shared')) as second_error:
+        list(second_crawler)
+
+    assert first_error.value is injected_error
+    assert second_error.value is injected_error
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_apply_raise_on_cancel_pre_cancelled_raises_and_callback_not_called(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    `apply()` honors the flag: a pre-cancelled token raises and the callback never runs.
+
+    Because `apply()` delegates to `self.go(token)`, the same `_check_token`
+    pre-loop check that raises during `list()` raises here too — and the
+    callback is therefore never reached.
+    """
+    seen: list = []
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        crawler.apply(seen.append)
+
+    assert seen == []
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+@pytest.mark.parametrize('n', [0, 1, 2, 3])
+def test_apply_raise_on_cancel_mid_iteration_raises_after_partial_callbacks(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]], n: int):
+    """
+    `apply()` calls the callback for the first `n` paths and then raises when the token cancels.
+
+    Uses a counter inside the callback to drive a `ConditionToken` that
+    cancels after `n` invocations. After the raise, `seen` holds exactly
+    the same prefix that the bare iterator returns — `apply()` does not
+    swallow partial work.
+    """
+    seen: list = []
+    index = 0
+
+    def condition() -> bool:
+        return index == n
+
+    def callback(path: Path) -> None:
+        nonlocal index
+        seen.append(path)
+        index += 1
+
+    try:
+        ConditionToken(lambda: True).check()
+    except CancellationError as original_exception:
+        condition_message = str(original_exception)
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, condition_message)
+    crawler = factory(crawl_directory_path, token=ConditionToken(condition), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        crawler.apply(callback)
+
+    assert seen == list(factory(crawl_directory_path))[:n]
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_apply_raise_on_cancel_instance_propagates_same_instance(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    `apply()` propagates the instance form by identity, just like `iter()` does.
+
+    The identity guarantee for the instance form must survive the `apply()`
+    delegation path. Without an explicit assertion here, an accidental
+    `apply()` wrapper that catches and re-raises would silently break the
+    contract.
+    """
+    injected_error = ValueError('user message')
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=injected_error)
+
+    with pytest.raises(ValueError, match=match('user message')) as error:
+        crawler.apply(lambda path: None)  # noqa: ARG005
+
+    assert error.value is injected_error
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_apply_raise_on_cancel_class_uses_native_cantok_message(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    `apply()` carries cantok's native message through the class form, just like `iter()` does.
+
+    Catches the case where `apply()` might be wrapped in a way that loses
+    the native message of the underlying cancellation exception.
+    """
+    expected_message = extract_cancellation_message(SimpleToken)
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=ValueError)
+
+    with pytest.raises(ValueError, match=match(expected_message)):
+        crawler.apply(lambda path: None)  # noqa: ARG005
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_apply_raise_on_cancel_call_time_token_cancellation_triggers_raise(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    `apply()` honors the token passed at call time, not just the constructor one.
+
+    The crawler is built with `DefaultToken()` (never cancels) plus the
+    flag; a cancelled token is then passed directly to `apply(...,
+    token=...)`. Because `go()` composes the two as `token + self.token`,
+    the call-time token alone is enough to trigger the flag's raise.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        crawler.apply(lambda path: None, token=SimpleToken(cancelled=True))  # noqa: ARG005
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [ValueError('x'), ValueError],
+    ids=['instance', 'class'],
+)
+def test_apply_raise_on_cancel_chains_cause(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[BaseException, Type[BaseException]]):
+    """
+    `apply()` preserves the `__cause__` chain set by `_check_token` for non-True forms.
+
+    Defends against a future refactor that wraps `apply()` and accidentally
+    discards exception chaining.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)) as error:
+        crawler.apply(lambda path: None)  # noqa: ARG005
+
+    assert isinstance(error.value.__cause__, CancellationError)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_freeze_pre_cancelled_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    With both `freeze=True` and the flag set, a pre-cancelled token still raises.
+
+    Covers the snapshot-build path entry: `list(self._traverse(token))`
+    short-circuits as soon as `_check_token` raises on the first
+    invocation.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), freeze=True, raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_freeze_cancellation_during_snapshot_build_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    A token that cancels during snapshot construction (driven by a filter side-effect) raises from `_traverse` before any yield.
+
+    With `freeze=True` the snapshot is built by `list(self._traverse(token))`.
+    The counter-in-filter cancels mid-build; the raise short-circuits
+    `list()` and `list(crawler)` therefore raises before producing any
+    output.
+    """
+    index = 0
+
+    def empty_filter(path: Path) -> bool:  # noqa: ARG001
+        nonlocal index
+        index += 1
+        return True
+
+    def condition() -> bool:
+        return index == 1
+
+    try:
+        ConditionToken(lambda: True).check()
+    except CancellationError as original_exception:
+        condition_message = str(original_exception)
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, condition_message)
+    token = ConditionToken(condition)
+    crawler = factory(crawl_directory_path, token=token, filter=empty_filter, freeze=True, raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_freeze_cancellation_during_snapshot_replay_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    With `freeze=True`, cancellation after snapshot materialization raises during replay.
+
+    The first `next(it)` materializes the snapshot (because `freeze=True`
+    forces eager `list(self._traverse(token))`). After that, an external
+    `token.cancel()` puts the token into cancelled state. The next
+    `next(it)` call goes through the `_check_token` in the snapshot replay
+    loop and raises. Without this test the replay-loop's `_check_token`
+    branch could regress silently.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    token = SimpleToken()
+    crawler = factory(crawl_directory_path, token=token, freeze=True, raise_on_cancel=raise_on_cancel_value)
+
+    iterator = iter(crawler)
+    next(iterator)
+    token.cancel()
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        next(iterator)
+
+
+def test_crawlers_group_propagates_child_raise_on_cancel_pre_cancelled(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
+    """
+    `CrawlersGroup` propagates a child's raise without any modification of its own.
+
+    The group passes the same token to each child; if any child has the
+    flag enabled and the token is cancelled, the child's raise bubbles up
+    through the group iteration. This locks that `CrawlersGroup.go()` does
+    not need its own cancellation handling.
+    """
+    expected_message = extract_cancellation_message(SimpleToken)
+    group = Crawler(crawl_directory_path) + Crawler(second_crawl_directory_path, raise_on_cancel=True)
+
+    with pytest.raises(CancellationError, match=match(expected_message)):
+        list(group.go(SimpleToken(cancelled=True)))
+
+
+def test_crawlers_group_first_child_silent_second_child_raises_mid_iteration(crawl_directory_path: Union[str, Path], second_crawl_directory_path: Union[str, Path]):
+    """
+    Each child of a `CrawlersGroup` independently applies its own flag.
+
+    With a shared `ConditionToken` that cancels after the first call, the
+    first (flag-less) child can iterate normally until the trigger; then
+    the second (flagged) child enters with a cancelled token and raises on
+    its first `_check_token` call.
+    """
+    index = 0
+
+    def condition() -> bool:
+        return index >= 1
+
+    def empty_filter(path: Path) -> bool:  # noqa: ARG001
+        nonlocal index
+        index += 1
+        return True
+
+    try:
+        ConditionToken(lambda: True).check()
+    except CancellationError as original_exception:
+        expected_message = str(original_exception)
+    token = ConditionToken(condition)
+    group = Crawler(crawl_directory_path, filter=empty_filter) + Crawler(second_crawl_directory_path, filter=empty_filter, raise_on_cancel=True)
+
+    with pytest.raises(CancellationError, match=match(expected_message)):
+        list(group.go(token))
+
+
+def test_crawlers_group_constructor_does_not_accept_raise_on_cancel_kwarg(crawl_directory_path: Union[str, Path]):
+    """
+    `CrawlersGroup.__init__` rejects the `raise_on_cancel` keyword argument.
+
+    Mirrors the existing `freeze` child-only contract: the flag belongs on
+    each crawler, not on the group. Locks the API surface so a future
+    refactor cannot quietly promote the flag to the group.
+    """
+    if sys.version_info < (3, 10):
+        expected_message = "__init__() got an unexpected keyword argument 'raise_on_cancel'"
+    else:
+        expected_message = "CrawlersGroup.__init__() got an unexpected keyword argument 'raise_on_cancel'"
+
+    with pytest.raises(TypeError, match=match(expected_message)):
+        CrawlersGroup([Crawler(crawl_directory_path)], raise_on_cancel=True)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_only_files_false_pre_cancelled_raises(all_entities_directory_path: Union[str, Path], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    The flag fires regardless of whether the crawler yields files-only or all entities.
+
+    Crosses the flag with `only_files=False` to confirm that the
+    file/directory branching inside the traversal does not bypass
+    `_check_token`.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = Crawler(all_entities_directory_path, only_files=False, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_zero_paths_and_cancelled_token_raises(factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    With no base paths at all, a cancelled token still triggers the flag's raise.
+
+    Demonstrates the value of the new `_check_token` point that runs
+    independently of the per-path loop body. Without that extra check the
+    crawler would silently yield nothing — the same as a non-cancelled
+    crawler with no paths — and a user enabling the flag would be left
+    wondering why no exception arrived.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler = factory(token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+def test_raise_on_cancel_with_path_having_no_matching_files_and_cancelled_token_raises(tmp_path: Path, factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    The entry `_check_token` in `_traverse` raises even when the only base path holds nothing that the filter would accept.
+
+    The mechanism actually exercised here is the per-path entry check at
+    the top of the `_traverse` loop: with a pre-cancelled token, that
+    check fires on the first base path and raises before `rglob` and the
+    filter run at all. The directory contents (a single non-`.py` file)
+    and the `filter=lambda x: False` are decorative — they describe a
+    realistic "rglob/filter would yield nothing" scenario that surrounds
+    the cancellation, but the raise itself is independent of that
+    surrounding state. Without the entry check the iteration would
+    silently return an empty list, which is the contract this test is
+    locking in (alongside the zero-paths case in
+    `test_raise_on_cancel_with_zero_paths_and_cancelled_token_raises`,
+    which exercises the trailing `_check_token` after the outer loop).
+    """
+    (tmp_path / 'not_python.txt').touch()
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    crawler_kwargs: Dict[str, Any] = {'token': SimpleToken(cancelled=True), 'raise_on_cancel': raise_on_cancel_value}
+    if factory is Crawler:
+        crawler_kwargs['filter'] = lambda path: False  # noqa: ARG005
+    crawler = factory(tmp_path, **crawler_kwargs)
+
+    with pytest.raises(expected_type, match=match(expected_message)):
+        list(crawler)
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'raise_on_cancel_value',
+    [True, ValueError('x'), ValueError],
+    ids=['true', 'instance', 'class'],
+)
+@pytest.mark.parametrize('token_route', ['constructor', 'call_time'])
+def test_raise_on_cancel_either_token_route_triggers_raise(crawl_directory_path: Union[str, Path], factory: Type[Crawler], raise_on_cancel_value: Union[bool, BaseException, Type[BaseException]], token_route: str):
+    """
+    Cancellation through either the constructor token or the call-time token triggers the flag.
+
+    The implementation composes the two as `token + self.token`. Both
+    routes must lead to a raise when the flag is set — otherwise a user
+    who relies on one of the two ways to wire a token would see silent
+    completion despite enabling the flag.
+    """
+    expected_type, expected_message = predict_raised_exception(raise_on_cancel_value, extract_cancellation_message(SimpleToken))
+    cancelled_token = SimpleToken(cancelled=True)
+
+    if token_route == 'constructor':
+        crawler = factory(crawl_directory_path, token=cancelled_token, raise_on_cancel=raise_on_cancel_value)
+        with pytest.raises(expected_type, match=match(expected_message)):
+            list(crawler)
+    else:
+        crawler = factory(crawl_directory_path, raise_on_cancel=raise_on_cancel_value)
+        with pytest.raises(expected_type, match=match(expected_message)):
+            list(crawler.go(cancelled_token))
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+@pytest.mark.parametrize(
+    'input_value',
+    [False, True, ValueError('x'), ValueError, BaseException, KeyboardInterrupt],
+    ids=['false', 'true', 'instance', 'class', 'base_class', 'keyboard_class'],
+)
+def test_raise_on_cancel_attribute_normalizes_to_pure_bool(factory: Type[Crawler], input_value: Union[bool, BaseException, Type[BaseException]]):
+    """
+    `crawler.raise_on_cancel` is always a pure `bool` regardless of the input form.
+
+    Locks the core normalization invariant: bool inputs land on
+    `raise_on_cancel` as themselves, every non-bool valid input lands as
+    `True`. Built-in subclasses of `BaseException` and `KeyboardInterrupt`
+    are included to double as acceptance checks for those classes.
+    """
+    crawler = factory('.', raise_on_cancel=input_value)
+    expected_bool = input_value if isinstance(input_value, bool) else True
+
+    assert type(crawler.raise_on_cancel) is bool
+    assert crawler.raise_on_cancel is expected_bool
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_cancellation_exception_attribute_storage(factory: Type[Crawler]):
+    """
+    `crawler.cancellation_exception` is `None` for bool inputs and the exact input by identity otherwise.
+
+    Locks both halves of the second-field contract: bool inputs leave the
+    holder empty, non-bool inputs are stored as-is without cloning.
+    """
+    assert factory('.', raise_on_cancel=False).cancellation_exception is None
+    assert factory('.', raise_on_cancel=True).cancellation_exception is None
+
+    instance = ValueError('x')
+    assert factory('.', raise_on_cancel=instance).cancellation_exception is instance
+
+    assert factory('.', raise_on_cancel=ValueError).cancellation_exception is ValueError
+    assert factory('.', raise_on_cancel=BaseException).cancellation_exception is BaseException
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_default_construction_disables_flag_and_exception_holder(factory: Type[Crawler]):
+    """
+    Default construction leaves both internal fields in the disabled state.
+
+    Without any `raise_on_cancel` kwarg, the flag is `False` and the
+    holder is `None`. Defends the entire feature's off-by-default
+    posture in a single test independent of the parametrized normalization
+    test.
+    """
+    crawler = factory('.')
+
+    assert crawler.raise_on_cancel is False
+    assert crawler.cancellation_exception is None
+
+
+@pytest.mark.parametrize('factory', [Crawler, PythonCrawler])
+def test_raise_on_cancel_instance_with_falsey_bool_still_raises(crawl_directory_path: Union[str, Path], factory: Type[Crawler]):
+    """
+    An exception object whose `__bool__` returns False must still trigger a raise on cancellation.
+
+    Regression guard for the two-field storage design. In an earlier draft
+    of this feature there was no split between `self.raise_on_cancel` and
+    `self.cancellation_exception`: the user-passed value (bool, instance,
+    or class) was stored directly on `self.raise_on_cancel`, and the
+    hot path was `if self.raise_on_cancel: ...`. With that layout, an
+    exception class whose instances override `__bool__` to return False
+    would cause Python to evaluate `bool(self.raise_on_cancel) == False`
+    in the hot path, silently skipping the raise branch and making
+    cancellation invisible to the caller. The current two-field design
+    keeps `self.raise_on_cancel` as a pure `bool`, so the user object's
+    `__bool__` never participates in the hot-path check. This test exists
+    to make sure a future refactor that re-collapses the two fields does
+    not also re-introduce that silent-failure hazard.
+    """
+    class FalseyError(BaseException):
+        def __bool__(self) -> bool:
+            return False
+
+    raise_on_cancel_values: List[Any] = [FalseyError(), FalseyError]
+    for raise_on_cancel_value in raise_on_cancel_values:
+        expected_message = (
+            '' if isinstance(raise_on_cancel_value, BaseException) else extract_cancellation_message(SimpleToken)
+        )
+        crawler = factory(crawl_directory_path, token=SimpleToken(cancelled=True), raise_on_cancel=raise_on_cancel_value)
+        with pytest.raises(FalseyError, match=match(expected_message)):
+            list(crawler)
