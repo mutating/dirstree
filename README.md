@@ -157,6 +157,15 @@ for path in crawler.go(token=TimeoutToken(0.0001)): # Limit the iteration time t
 
 > ↑ Follow these rules to avoid accidentally "baking" an expired token inside a crawler object.
 
+By default, cancellation stops iteration silently — the caller cannot tell it apart from natural exhaustion. Pass `raise_on_cancel=...` to make the crawler raise an exception on cancellation instead:
+
+```python
+for path in Crawler('.', token=TimeoutToken(0.0001), raise_on_cancel=True):
+    print(path)
+```
+
+> ↑ `raise_on_cancel=True` re-raises the native `cantok` exception; `raise_on_cancel=MyError("...")` raises that exact instance; `raise_on_cancel=MyError` instantiates the class with the cantok message and raises that. Default is `False` (silent).
+
 
 ## Combination
 
