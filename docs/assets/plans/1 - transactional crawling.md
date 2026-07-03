@@ -266,7 +266,7 @@ import threading
 import warnings
 from functools import cached_property, lru_cache
 from typing import Optional
-from printo import describe_data_object, not_none
+from printo import describe_call, not_none
 
 from dirstree.crawlers.transactional.alarm import ChangeAlarm
 
@@ -284,8 +284,8 @@ class TransactionalCrawler(AbstractCrawler):
         self._lifecycle_lock = threading.Lock()
 
     def __repr__(self) -> str:
-        return describe_data_object(
-            self.__class__.__name__,
+        return describe_call(
+            self.__class__,
             (self.source,),
             {'active': self._active},
             filters={'active': not_none},
